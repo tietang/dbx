@@ -6,7 +6,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/segmentio/ksuid"
 	"github.com/shopspring/decimal"
-	"imooc.com/tietang/red-envelope/infra/dbx"
+	"github.com/tietang/dbx"
 	"time"
 )
 

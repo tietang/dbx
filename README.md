@@ -4,37 +4,107 @@
 高性能数据库扩展工具,目标:
 1. 简单高效，最大限度的保留原生特性的基础上，使其使用起来简单，使得开发更高效。
 2. 高性能, 支持orm的基础上，最大限度的减少性能损耗，适用于高性能场景的数据库查询。
+3. 自动表名和字段名称映射，默认自动把驼峰命名转换成下划线命名，比如 OrderItem -> order_item
+4. 支持自定义表名和字段名称映射
  
 
-#### 软件架构
-软件架构说明
-
+ 
 
 #### 安装教程
 
-1. xxxx
-2. xxxx
-3. xxxx
+1. go get -u  github.com/tietang/dbx 
+ 
 
 #### 使用说明
 
-1. xxxx
-2. xxxx
-3. xxxx
+##### 字段映射：
 
-#### 参与贡献
+格式：db:"field name[,uni|id][,omitempty][-]"
 
-1. Fork 本仓库
-2. 新建 Feat_xxx 分支
-3. 提交代码
-4. 新建 Pull Request
+ - uni|unique 字段为唯一索引字段
+ - id|pk 字段为主键
+ - omitempty 字段更新和写入时忽略
+ - \- 字段在更新，写入、查询时忽略
+
+Example:
+```go
+
+type Order struct {
+    OrderId   int64           `db:"order_id,id"`
+    Username  string          `db:"username"`
+    UserId    string          `db:"user_id"`
+    Amount    decimal.Decimal `db:"amount"`
+    Quantity  int             `db:"quantity"`
+    Status    int             `db:"status"`
+    OrderType int             `db:"order_type"`
+    PayStatus int             `db:"pay_status"`
+    CreatedAt *time.Time      `db:"created_at,omitempty"`
+    UpdatedAt time.Time       `db:"updated_at,omitempty"`
+}
+```
+
+##### 打开连接：
+
+```go
+    settings := dbx.Settings{
+        DriverName:      "mysql",
+        User:            "root",
+        Password:        "",
+        Host:            "192.168.232.175:3306",
+        MaxOpenConns:    10,
+        MaxIdleConns:    2,
+        ConnMaxLifetime: time.Minute * 30,
+        Options: map[string]string{
+            "charset":   "utf8",
+            "parseTime": "true",
+        },
+    }
+    db, err := dbx.Open(settings)
+	if err != nil {
+		panic(err)
+	}
+	
+    model := &Model{}
+    //插入
+    rs,err=db.Insert(model)
+    //更新
+    rs,err=db.Update(model)
+    model = &Model{Id: 10}
+    //查询1个
+    err=db.GetOne(model)
+    err=db.Get(model, "select * from model where id=?", 10)
+    q := &Model{Id: 10, Name: ""}
+    var models []Model
+    err=db.FindExample(q, &models)
+    err=db.Find(&models, "select * from model where id <?", 20)
+	
+```
+
+事务：
+
+```go
+    err := db.Tx(func(runner *dbx.TxRunner) error {
+        model := &Model{}
+        //插入
+        rs, err = runner.Insert(model)
+        //更新
+        rs, err = runner.Update(model)
+        model = &Model{Id: 10}
+        //查询1个
+        err = runner.GetOne(model)
+        err = runner.Get(model, "select * from model where id=?", 10)
+        q := &Model{Id: 10, Name: ""}
+        var models []Model
+        //查询列表
+        err = runner.FindExample(q, &models)
+        err = runner.Find(&models, "select * from model where id <?", 20)
+    })
+```
 
 
-#### 码云特技
+模型和表名映射：
 
-1. 使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2. 码云官方博客 [blog.gitee.com](https://blog.gitee.com)
-3. 你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解码云上的优秀开源项目
-4. [GVP](https://gitee.com/gvp) 全称是码云最有价值开源项目，是码云综合评定出的优秀开源项目
-5. 码云官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6. 码云封面人物是一档用来展示码云会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+```go
+db.RegisterTable(&Order{}, "t_order")
+
+```

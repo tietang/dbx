@@ -2,7 +2,7 @@ package mapping
 
 import (
 	"fmt"
-	"imooc.com/tietang/red-envelope/infra/reflectx"
+	"github.com/tietang/dbx/reflectx"
 	"reflect"
 	"strings"
 )
