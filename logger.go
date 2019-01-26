@@ -132,7 +132,7 @@ func (c *loggerSettings) SetLogger(lg ILogger) {
 	c.queryLogger = lg
 }
 func (c *loggerSettings) SetLogging(value bool) {
-	c.loggingEnabled = true
+	c.loggingEnabled = value
 }
 
 func (c *loggerSettings) LoggingEnabled() bool {

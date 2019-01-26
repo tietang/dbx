@@ -10,12 +10,6 @@ import (
 	"time"
 )
 
-//var entityMapper = rowsMapping.NewEntityMapper()
-//
-//func (r *Runner)  RegisterTable(model interface{}, tableName string) {
-//	entityMapper.RegisterTable(model, tableName)
-//}
-
 func (r *Runner) Exec(sql string, params ...interface{}) (rs sql.Result, err error) {
 	return r.ExecContext(context.Background(), sql, params...)
 }

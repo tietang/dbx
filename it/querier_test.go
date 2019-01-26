@@ -37,7 +37,7 @@ func init() {
         panic(err)
     }
     db = sqlDb
-    db.SetLogging(true)
+    db.SetLogging(false)
     db.RegisterTable(&EnvelopeGoods{}, "red_envelope_goods")
 }
 
