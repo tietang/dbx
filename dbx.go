@@ -15,8 +15,11 @@ func Open(settings Settings) (db *Database, err error) {
     db.ILogger = &defaultLogger{}
     db.Runner.LoggerSettings = defaultLoggerSettings
     db.SetLogging(settings.LogginEenabled)
-    db.SetMaxIdleConns(settings.MaxIdleConns)
+    //设置最大打开连接数
     db.SetMaxOpenConns(settings.MaxOpenConns)
+    //设置连接池最大空闲连接数
+    db.SetMaxIdleConns(settings.MaxIdleConns)
+    //设置连接最大生存时间
     db.SetConnMaxLifetime(settings.ConnMaxLifetime)
     return db, err
 }
