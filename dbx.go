@@ -10,6 +10,9 @@ import (
 func Open(settings Settings) (db *Database, err error) {
     db = &Database{}
     db.DB, err = sql.Open(settings.DriverName, settings.DataSourceName())
+    if err != nil {
+        panic(err)
+    }
     db.EntityMapper = mapping.NewEntityMapper()
     db.Runner = NewRunner(db.DB, db.EntityMapper)
     db.ILogger = &defaultLogger{}
