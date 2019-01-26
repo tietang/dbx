@@ -17,7 +17,7 @@ func Open(settings Settings) (db *Database, err error) {
     db.Runner = NewRunner(db.DB, db.EntityMapper)
     db.ILogger = &defaultLogger{}
     db.Runner.LoggerSettings = defaultLoggerSettings
-    db.SetLogging(settings.LogginEenabled)
+    db.SetLogging(settings.LoggingEenabled)
     //设置最大打开连接数
     db.SetMaxOpenConns(settings.MaxOpenConns)
     //设置连接池最大空闲连接数
@@ -70,7 +70,7 @@ type Settings struct {
     ConnMaxLifetime time.Duration
     MaxOpenConns    int
     MaxIdleConns    int
-    LogginEenabled  bool
+    LoggingEenabled bool
 }
 
 func (s *Settings) DataSourceName() string {

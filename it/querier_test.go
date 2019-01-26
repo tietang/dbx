@@ -26,7 +26,7 @@ func init() {
         MaxOpenConns:    10,
         MaxIdleConns:    2,
         ConnMaxLifetime: time.Minute * 30,
-        LogginEenabled:true,
+        LoggingEenabled: true,
         Options: map[string]string{
             "charset":   "utf8",
             "parseTime": "true",
