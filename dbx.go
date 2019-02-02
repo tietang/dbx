@@ -7,6 +7,27 @@ import (
     "time"
 )
 
+// settings := dbx.Settings{
+//        DriverName: "mysql",
+//        User:       "root",
+//        Password:   "123456",
+//        Host:       "192.168.232.175:3306",
+//        //Host:            "172.16.1.248:3306",
+//        Database:        "po0",
+//        MaxOpenConns:    10,
+//        MaxIdleConns:    2,
+//        ConnMaxLifetime: time.Minute * 30,
+//        LoggingEnabled:  true,
+//        Options: map[string]string{
+//            "charset":   "utf8",
+//            "parseTime": "true",
+//        },
+//    }
+//    var err error
+//    db, err = dbx.Open(settings)
+//    if err != nil {
+//        panic(err)
+//    }
 func Open(settings Settings) (db *Database, err error) {
     db = &Database{}
     db.DB, err = sql.Open(settings.DriverName, settings.DataSourceName())
