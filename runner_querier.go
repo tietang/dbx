@@ -46,7 +46,7 @@ func (r *Runner) FindExampleContext(ctx context.Context, querier interface{}, re
 	wheres := make([]string, 0)
 	for _, fd := range entity.Columns {
 		lastv := ind.FieldByIndex(fd.Index)
-		names += fd.ColumnName + ","
+		names += "`" + fd.ColumnName + "`,"
 		if lastv.Kind() == reflect.Ptr && lastv.IsNil() {
 			continue
 		}
@@ -56,9 +56,8 @@ func (r *Runner) FindExampleContext(ctx context.Context, querier interface{}, re
 		if fd.ColumnName == "" || lastv.Interface() == fd.Zero.Interface() {
 			continue
 		}
-		//fmt.Printf("0000:   %#v==%#v    %#v  %#v    %#v  %#v  \n", lastv, fd.Zero, lastv.Interface() == fd.Zero.Interface(), lastv.IsValid(), (lastv.Kind() == reflect.Ptr && lastv.IsNil()))
 
-		wheres = append(wheres, fd.ColumnName+"=?")
+		wheres = append(wheres, "`" + fd.ColumnName + "`=?")
 		params = append(params, lastv.Interface())
 
 	}
@@ -68,7 +67,7 @@ func (r *Runner) FindExampleContext(ctx context.Context, querier interface{}, re
 	}
 
 	where := strings.Join(wheres, " and ")
-	query := fmt.Sprintf("select %s from %s where %s", names[0:len(names)-1], entity.TableName, where)
+	query := fmt.Sprintf("select %s from `%s` where %s", names[0:len(names)-1], entity.TableName, where)
 
 	if r.LoggingEnabled() {
 		defer func(start time.Time) {
@@ -186,7 +185,7 @@ func (r *Runner) GetOneContext(ctx context.Context, out interface{}) (err error)
 	wheres := make([]string, 0)
 	for _, fd := range entity.Columns {
 		lastv := ind.FieldByIndex(fd.Index)
-		names += fd.ColumnName + ","
+		names += "`" + fd.ColumnName + "`,"
 		if lastv.Kind() == reflect.Ptr && lastv.IsNil() {
 			continue
 		}
@@ -202,17 +201,17 @@ func (r *Runner) GetOneContext(ctx context.Context, out interface{}) (err error)
 		}
 
 		if fd.IsUnique {
-			wheres = append(wheres, fd.ColumnName+"=? ")
+			wheres = append(wheres, "`" + fd.ColumnName + "`=? ")
 			whereArgs = append(whereArgs, lastv.Interface())
 		}
 		if fd.IsPk {
-			wheres = append(wheres, fd.ColumnName+"=? ")
+			wheres = append(wheres, "`" + fd.ColumnName + "`=? ")
 			whereArgs = append(whereArgs, lastv.Interface())
 		}
 
 	}
 	where := strings.Join(wheres, " and ")
-	query := fmt.Sprintf("select %s from %s where %s", names[0:len(names)-1], entity.TableName, where)
+	query := fmt.Sprintf("select %s from `%s` where %s", names[0:len(names)-1], entity.TableName, where)
 
 	if len(wheres) == 0 {
 		err := errors.New("no unique column for db tag. example: `db:\"order_id,unique\"` : " + ind.Kind().String())

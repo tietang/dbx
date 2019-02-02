@@ -55,7 +55,6 @@ func (r *Runner) InsertContext(ctx context.Context, model interface{}) (rs sql.R
 
     for _, fd := range entity.Columns {
         lastv := ind.FieldByIndex(fd.Index)
-        //fmt.Printf("%+v\n", fd)
         if lastv.Kind() == reflect.Ptr && lastv.IsNil() {
             continue
         }
@@ -69,7 +68,7 @@ func (r *Runner) InsertContext(ctx context.Context, model interface{}) (rs sql.R
             continue
         }
         params = append(params, lastv.Interface())
-        names += "`"+fd.ColumnName + "`,"
+        names += "`" + fd.ColumnName + "`,"
         placeholders += "?,"
     }
     sql := fmt.Sprintf("insert into `%s`(%s) values(%s)", entity.TableName, names[0:len(names)-1], placeholders[0:len(placeholders)-1])
@@ -104,13 +103,13 @@ func (r *Runner) UpdateContext(ctx context.Context, model interface{}) (rs sql.R
         }
 
         params = append(params, lastv.Interface())
-        names += fd.ColumnName + "=?,"
+        names += "`" + fd.ColumnName + "`=?,"
         if fd.IsUnique {
-            wheres = append(wheres, fd.ColumnName+"=? ")
+            wheres = append(wheres, "`"+fd.ColumnName+"`=? ")
             whereArgs = append(whereArgs, lastv.Interface())
         }
         if fd.IsPk {
-            wheres = append(wheres, fd.ColumnName+"=? ")
+            wheres = append(wheres, "`"+fd.ColumnName+"`=? ")
             whereArgs = append(whereArgs, lastv.Interface())
         }
 
@@ -121,7 +120,7 @@ func (r *Runner) UpdateContext(ctx context.Context, model interface{}) (rs sql.R
     where := strings.Join(wheres, " and ")
     params = append(params, whereArgs...)
 
-    sql := fmt.Sprintf("update %s set %s where %s", entity.TableName, names[0:len(names)-1], where)
+    sql := fmt.Sprintf("update `%s` set %s where %s", entity.TableName, names[0:len(names)-1], where)
     return r.ExecContext(ctx, sql, params...)
 }
 
