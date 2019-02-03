@@ -81,6 +81,7 @@ func (r *Runner) Update(model interface{}) (rs sql.Result, err error) {
 
 func (r *Runner) UpdateContext(ctx context.Context, model interface{}) (rs sql.Result, err error) {
     entity, ind := r.GetEntity(model)
+    var sql string
     //fmt.Printf("%+v  \n", model)
     names := ""
     params, whereArgs := make([]interface{}, 0), make([]interface{}, 0)
@@ -114,13 +115,26 @@ func (r *Runner) UpdateContext(ctx context.Context, model interface{}) (rs sql.R
         }
 
     }
+    if r.LoggingEnabled() {
+        defer func(start time.Time) {
+            r.Logger().Log(&QueryStatus{
+                Query:   sql,
+                Args:    params,
+                Err:     err,
+                Start:   start,
+                End:     time.Now(),
+                Context: ctx,
+            })
+        }(time.Now())
+    }
     if len(wheres) == 0 {
-        return nil, errors.New("no unique column config for db tag.")
+        err = errors.New("no unique column config for db tag.")
+        return nil, err
     }
     where := strings.Join(wheres, " and ")
     params = append(params, whereArgs...)
 
-    sql := fmt.Sprintf("update `%s` set %s where %s", entity.TableName, names[0:len(names)-1], where)
+    sql = fmt.Sprintf("update `%s` set %s where %s", entity.TableName, names[0:len(names)-1], where)
     return r.ExecContext(ctx, sql, params...)
 }
 
