@@ -178,7 +178,6 @@ func (r *Runner) GetContext(ctx context.Context, out interface{}, sql string, pa
 	if rows.Next() {
 		message = "warn: has more data."
 	}
-	rows.Close()
 	return true, err
 }
 
