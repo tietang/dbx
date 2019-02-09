@@ -57,11 +57,12 @@ func TestInsert(t *testing.T) {
 			So(rows, ShouldEqual, 1)
 			g1 := &EnvelopeGoods{EnvelopeNo: g0.EnvelopeNo}
 
-			err = db.GetOne(g1)
+			ok, err := db.GetOne(g1)
 			fmt.Println()
 			fmt.Printf("%+v\n", g0)
 			fmt.Printf("%+v\n", g1)
 			So(err, ShouldBeNil)
+			So(ok, ShouldBeTrue)
 			So(*g1.EnvelopeNo, ShouldEqual, *g0.EnvelopeNo)
 			So(g1.EnvelopeType, ShouldEqual, g0.EnvelopeType)
 			So(g1.Username, ShouldEqual, g0.Username)
@@ -112,11 +113,12 @@ func TestUpdate(t *testing.T) {
 			So(rows, ShouldEqual, 1)
 			//
 			g2 := &EnvelopeGoods{EnvelopeNo: g0.EnvelopeNo}
-			err = db.GetOne(g2)
+			ok, err := db.GetOne(g2)
 			fmt.Println()
 			fmt.Printf("%+v\n", g2)
 			fmt.Printf("%+v\n", g1)
 			So(err, ShouldBeNil)
+			So(ok, ShouldBeTrue)
 			So(*g2.EnvelopeNo, ShouldEqual, *g1.EnvelopeNo)
 			So(g2.EnvelopeType, ShouldEqual, g1.EnvelopeType)
 			So(g2.Username, ShouldEqual, g1.Username)

@@ -139,11 +139,11 @@ func (r *Runner) SelectContext(ctx context.Context, mapper RowsMapper, resultSli
 	return err
 }
 
-func (r *Runner) Get(out interface{}, sql string, params ...interface{}) (err error) {
+func (r *Runner) Get(out interface{}, sql string, params ...interface{}) (ok bool, err error) {
 	return r.GetContext(context.Background(), out, sql, params...)
 }
 
-func (r *Runner) GetContext(ctx context.Context, out interface{}, sql string, params ...interface{}) (err error) {
+func (r *Runner) GetContext(ctx context.Context, out interface{}, sql string, params ...interface{}) (ok bool, err error) {
 	message := ""
 
 	if r.LoggingEnabled() {
@@ -161,26 +161,28 @@ func (r *Runner) GetContext(ctx context.Context, out interface{}, sql string, pa
 	}
 	rows, err := r.QueryContext(ctx, sql, params...)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if rows.Next() {
 		out, err = r.rowsMapping(out, rows)
 		if err != nil {
-			return err
+			return false, err
 		}
+	} else {
+		return false, err
 	}
 
 	if rows.Next() {
 		message = "warn: has more data."
 	}
-	return err
+	return true, err
 }
 
-func (r *Runner) GetOne(out interface{}) (err error) {
+func (r *Runner) GetOne(out interface{}) (ok bool, err error) {
 	return r.GetOneContext(context.Background(), out)
 }
 
-func (r *Runner) GetOneContext(ctx context.Context, out interface{}) (err error) {
+func (r *Runner) GetOneContext(ctx context.Context, out interface{}) (ok bool, err error) {
 	entity, ind := r.GetEntity(out)
 	//fmt.Printf("%+v  \n", model)
 	names := ""
@@ -234,7 +236,7 @@ func (r *Runner) GetOneContext(ctx context.Context, out interface{}) (err error)
 				})
 			}(time.Now())
 		}
-		return err
+		return false, err
 	}
 
 	return r.GetContext(ctx, out, query, whereArgs...)
