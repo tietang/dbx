@@ -16,8 +16,8 @@ func init() {
 	//url := "root:123456@tcp(192.168.232.175:3306)/po0?charset=utf8&parseTime=true"
 	settings := dbx.Settings{
 		DriverName: "mysql",
-		User:       "root",
-		Password:   "123456",
+		User:       "po",
+		Password:   "111111",
 		Host:       "192.168.232.175:3306",
 		//Host:            "172.16.1.248:3306",
 		Database:        "po0",

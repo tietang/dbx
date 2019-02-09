@@ -1,82 +1,82 @@
 package mapping
 
 import (
-    "fmt"
-    "github.com/tietang/dbx/reflectx"
-    "reflect"
-    "strings"
+	"fmt"
+	"github.com/tietang/dbx/reflectx"
+	"reflect"
+	"strings"
 )
 
 type FieldModel struct {
-    reflectx.FieldInfo
-    ColumnName      string
-    TypeFullName    string
-    FieldType       reflect.StructField
-    FieldName       string
-    ParentFieldName string
-    ParentFieldType reflect.StructField
-    FieldIndex      int
-    Omitempty       bool
-    EmbeddedStruct  bool
-    IsUnique        bool
-    IsPk            bool
+	reflectx.FieldInfo
+	ColumnName      string
+	TypeFullName    string
+	FieldType       reflect.StructField
+	FieldName       string
+	ParentFieldName string
+	ParentFieldType reflect.StructField
+	FieldIndex      int
+	Omitempty       bool
+	EmbeddedStruct  bool
+	IsUnique        bool
+	IsPk            bool
 }
 
 type EntityInfo struct {
-    TableName    string
-    TypeFullName string
-    StructType   reflect.Type
-    //
-    FieldModels []*FieldModel
-    Columns     map[string]*FieldModel
-    //Fields       map[string]*FieldModel
-    PkField      *FieldModel
-    UniqueFields []*FieldModel
-    //
-    isDbInit bool
+	TableName    string
+	TypeFullName string
+	StructType   reflect.Type
+	//
+	FieldModels []*FieldModel
+	Columns     map[string]*FieldModel
+	//Fields       map[string]*FieldModel
+	PkField      *FieldModel
+	UniqueFields []*FieldModel
+	//
+	isDbInit bool
 }
 
 func newEntity() *EntityInfo {
-    f := &EntityInfo{
-        FieldModels:  make([]*FieldModel, 0),
-        UniqueFields: make([]*FieldModel, 0),
-        Columns:      make(map[string]*FieldModel),
-        //Fields:      make(map[string]*FieldModel),
-    }
-    return f
+	f := &EntityInfo{
+		FieldModels:  make([]*FieldModel, 0),
+		UniqueFields: make([]*FieldModel, 0),
+		Columns:      make(map[string]*FieldModel),
+		//Fields:      make(map[string]*FieldModel),
+	}
+	return f
 
 }
 
 func (e *EntityInfo) Print() {
 
-    for key, value := range e.FieldModels {
-        fmt.Printf("%v %#v\n", key, value)
-    }
+	for key, value := range e.FieldModels {
+		fmt.Printf("%v %#v\n", key, value)
+	}
 }
 
 func (f *EntityInfo) Append(fd *FieldModel) {
-    f.FieldModels = append(f.FieldModels, fd)
+	f.FieldModels = append(f.FieldModels, fd)
 
-    c, ok := f.Columns[fd.ColumnName]
-    if ok {
-        if len(c.Index) > len(fd.Index) {
-            f.Columns[fd.ColumnName] = fd
-        }
-    } else {
-        f.Columns[fd.ColumnName] = fd
-    }
-    //f.Fields[fd.FieldName] = fd
-    if fd.IsUnique {
-        f.UniqueFields = append(f.UniqueFields, fd)
-    }
-    if fd.IsPk {
-        f.PkField = fd
-    }
+	c, ok := f.Columns[fd.ColumnName]
+	if ok {
+		if len(c.Index) > len(fd.Index) {
+			f.Columns[fd.ColumnName] = fd
+		}
+	} else {
+		f.Columns[fd.ColumnName] = fd
+	}
+	//f.Fields[fd.FieldName] = fd
+	if fd.IsUnique {
+		f.UniqueFields = append(f.UniqueFields, fd)
+	}
+	if fd.IsPk {
+		f.PkField = fd
+	}
 }
 
 func (f *EntityInfo) GetFieldModel(columnName string) (*FieldModel, bool) {
-    fi, ok := f.Columns[columnName]
-    return fi, ok
+	fi, ok := f.Columns[columnName]
+	return fi, ok
 }
 
 //
@@ -195,107 +195,110 @@ func (f *EntityInfo) GetFieldModel(columnName string) (*FieldModel, bool) {
 
 func expandFields(e *EntityInfo, fis []*reflectx.FieldInfo) {
 
-    for index, fi := range fis {
-        if len(fi.Children) < 0 {
-            expandFields(e, fi.Children)
-        }
-        fd := &FieldModel{}
+	for index, fi := range fis {
+		if len(fi.Children) < 0 {
+			expandFields(e, fi.Children)
+		}
+		fd := &FieldModel{}
 
-        fd.FieldInfo = *fi
-        fd.FieldName = fi.Field.Name
-        if fi.Field.Name == "" {
-            continue
-        }
-        fd.ColumnName = SnakeString(fd.FieldName)
-        fd.FieldType = fi.Field
-        fd.TypeFullName = fd.Field.Type.Name()
-        tag := fi.Field.Tag
-        tval := tag.Get("db")
-        tvals := strings.Split(tval, ",")
-        for k, v := range tvals {
-            if v == "-" {
-                continue
-            }
-            if strings.ToLower(v) == "omitempty" {
-                fd.Omitempty = true
-            }
-            if k == 0 {
-                if v != "" {
-                    fd.ColumnName = v
-                }
-            } else {
-                fi.Options[v] = v
-            }
-            if strings.ToLower(v) == "pk" || strings.ToLower(v) == "id" { //
-                fd.IsPk = true
-            }
-            if strings.ToLower(v) == "uni" || strings.ToLower(v) == "unique" {
-                fd.IsUnique = true
-            }
-        }
-        if fi.Field.Type.Kind() == reflect.Struct {
-            fi.Embedded = true
-        }
+		fd.FieldInfo = *fi
+		fd.FieldName = fi.Field.Name
+		if fi.Field.Name == "" {
+			continue
+		}
+		fd.ColumnName = SnakeString(fd.FieldName)
+		fd.FieldType = fi.Field
+		fd.TypeFullName = fd.Field.Type.Name()
+		tag := fi.Field.Tag
+		tval := tag.Get("db")
+		tvals := strings.Split(tval, ",")
+		for k, v := range tvals {
+			if v == "-" {
+				continue
+			}
+			if strings.ToLower(v) == "omitempty" {
+				fd.Omitempty = true
+			}
+			if k == 0 {
+				if v != "" {
+					fd.ColumnName = v
+				}
+			} else {
+				fi.Options[v] = v
+			}
+			if strings.ToLower(v) == "pk" || strings.ToLower(v) == "id" { //
+				fd.IsPk = true
+			}
+			if strings.ToLower(v) == "uni" || strings.ToLower(v) == "unique" {
+				fd.IsUnique = true
+			}
+		}
+		if fi.Field.Type.Kind() == reflect.Struct {
+			fd.Embedded = true
+		}
+		if fi.Field.Anonymous {
+			fd.Omitempty = true
+		}
 
-        fd.FieldIndex = index
-        fd.ParentFieldType = fi.Parent.Field
-        e.Append(fd)
+		fd.FieldIndex = index
+		fd.ParentFieldType = fi.Parent.Field
+		e.Append(fd)
 
-    }
+	}
 }
 
 func getFeilds(entity *EntityInfo, ind reflect.Type, anonymous bool) {
-    var (
-        //err error
-        sf reflect.StructField
-    )
+	var (
+		//err error
+		sf reflect.StructField
+	)
 
-    for i := 0; i < ind.NumField(); i++ {
-        sf = ind.Field(i)
-        //sf = ind.Type().FieldModel(i)
-        if sf.Type.Kind() == reflect.Struct || sf.Anonymous {
-            getFeilds(entity, sf.Type, true)
-        } else {
-            fi := GetField(i, sf, anonymous)
-            fi.ParentFieldName = sf.Name
-            if fi != nil {
-                entity.Append(fi)
-            }
+	for i := 0; i < ind.NumField(); i++ {
+		sf = ind.Field(i)
+		//sf = ind.Type().FieldModel(i)
+		if sf.Type.Kind() == reflect.Struct || sf.Anonymous {
+			getFeilds(entity, sf.Type, true)
+		} else {
+			fi := GetField(i, sf, anonymous)
+			fi.ParentFieldName = sf.Name
+			if fi != nil {
+				entity.Append(fi)
+			}
 
-        }
+		}
 
-    }
+	}
 
 }
 
 func GetField(index int, sf reflect.StructField, anonymous bool) *FieldModel {
-    fi := &FieldModel{}
-    fi.Options = make(map[string]string)
-    name := sf.Name
-    fi.FieldName = sf.Name
-    fi.ColumnName = SnakeString(name)
-    fi.FieldType = sf
-    fi.TypeFullName = sf.Type.Name()
-    tag := sf.Tag
-    tval := tag.Get("db")
-    tvals := strings.Split(tval, ",")
-    for k, v := range tvals {
-        if v == "-" {
-            return nil
-        }
-        if v == "omitempty" {
-            fi.Omitempty = true
-        }
-        if k == 0 {
-            fi.ColumnName = v
-        } else {
-            fi.Options[v] = v
-        }
-    }
-    fi.Embedded = anonymous
-    fi.FieldIndex = index
+	fi := &FieldModel{}
+	fi.Options = make(map[string]string)
+	name := sf.Name
+	fi.FieldName = sf.Name
+	fi.ColumnName = SnakeString(name)
+	fi.FieldType = sf
+	fi.TypeFullName = sf.Type.Name()
+	tag := sf.Tag
+	tval := tag.Get("db")
+	tvals := strings.Split(tval, ",")
+	for k, v := range tvals {
+		if v == "-" {
+			return nil
+		}
+		if v == "omitempty" {
+			fi.Omitempty = true
+		}
+		if k == 0 {
+			fi.ColumnName = v
+		} else {
+			fi.Options[v] = v
+		}
+	}
+	fi.Embedded = anonymous
+	fi.FieldIndex = index
 
-    //fmt.Println("####", index, tval, tvals)
+	//fmt.Println("####", index, tval, tvals)
 
-    return fi
+	return fi
 }

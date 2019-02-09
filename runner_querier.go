@@ -45,6 +45,9 @@ func (r *Runner) FindExampleContext(ctx context.Context, querier interface{}, re
 	params := make([]interface{}, 0)
 	wheres := make([]string, 0)
 	for _, fd := range entity.Columns {
+		if fd.Field.Anonymous {
+			continue
+		}
 		lastv := ind.FieldByIndex(fd.Index)
 		names += "`" + fd.ColumnName + "`,"
 		if lastv.Kind() == reflect.Ptr && lastv.IsNil() {
@@ -57,7 +60,7 @@ func (r *Runner) FindExampleContext(ctx context.Context, querier interface{}, re
 			continue
 		}
 
-		wheres = append(wheres, "`" + fd.ColumnName + "`=?")
+		wheres = append(wheres, "`"+fd.ColumnName+"`=?")
 		params = append(params, lastv.Interface())
 
 	}
@@ -184,8 +187,13 @@ func (r *Runner) GetOneContext(ctx context.Context, out interface{}) (err error)
 	whereArgs := make([]interface{}, 0)
 	wheres := make([]string, 0)
 	for _, fd := range entity.Columns {
+		if fd.Field.Anonymous {
+			continue
+		}
+
 		lastv := ind.FieldByIndex(fd.Index)
 		names += "`" + fd.ColumnName + "`,"
+
 		if lastv.Kind() == reflect.Ptr && lastv.IsNil() {
 			continue
 		}
@@ -199,13 +207,12 @@ func (r *Runner) GetOneContext(ctx context.Context, out interface{}) (err error)
 		if lastv.Interface() == fd.Zero.Interface() {
 			continue
 		}
-
 		if fd.IsUnique {
-			wheres = append(wheres, "`" + fd.ColumnName + "`=? ")
+			wheres = append(wheres, "`"+fd.ColumnName+"`=? ")
 			whereArgs = append(whereArgs, lastv.Interface())
 		}
 		if fd.IsPk {
-			wheres = append(wheres, "`" + fd.ColumnName + "`=? ")
+			wheres = append(wheres, "`"+fd.ColumnName+"`=? ")
 			whereArgs = append(whereArgs, lastv.Interface())
 		}
 
