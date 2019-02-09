@@ -16,7 +16,8 @@ type TxRunner struct {
 }
 
 type Runner struct {
-    SqlExecutor
+    sqlExecutor
+    mapperExecutor
     mapping.EntityMapper
     ILogger
     LoggerSettings
@@ -25,14 +26,14 @@ type Runner struct {
 func NewTxRunner(tx *sql.Tx) *TxRunner {
     r := &TxRunner{}
     r.Runner = &Runner{}
-    r.SqlExecutor = tx
+    r.sqlExecutor = tx
     r.Tx = tx
     return r
 }
 
-func NewRunner(se SqlExecutor, em mapping.EntityMapper) *Runner {
+func NewRunner(se sqlExecutor, em mapping.EntityMapper) *Runner {
     r := &Runner{}
-    r.SqlExecutor = se
+    r.sqlExecutor = se
     r.EntityMapper = em
     return r
 }

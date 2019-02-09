@@ -44,6 +44,7 @@ func (r *Runner) ExecContext(ctx context.Context, sql string, params ...interfac
     rs, err = stmt.ExecContext(ctx, params...)
     return rs, err
 }
+
 func (r *Runner) Insert(model interface{}) (rs sql.Result, err error) {
     return r.InsertContext(context.Background(), model)
 }
