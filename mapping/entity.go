@@ -203,7 +203,7 @@ func expandFields(e *EntityInfo, fis []*reflectx.FieldInfo) {
 
 		fd.FieldInfo = *fi
 		fd.FieldName = fi.Field.Name
-		fmt.Printf("%+v %+v %+v\n", fd.Field.Name, fd.Name, fd)
+		//fmt.Printf("%+v %+v %+v\n", fd.Field.Name, fd.Name, fd)
 		if fi.Field.Name == "" {
 			continue
 		}
