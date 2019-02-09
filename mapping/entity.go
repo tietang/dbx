@@ -15,7 +15,7 @@ type FieldModel struct {
 	FieldName       string
 	ParentFieldName string
 	ParentFieldType reflect.StructField
-	FieldIndex      int
+	FieldIndex      []int
 	Omitempty       bool
 	EmbeddedStruct  bool
 	IsUnique        bool
@@ -194,57 +194,80 @@ func (f *EntityInfo) GetFieldModel(columnName string) (*FieldModel, bool) {
 //}
 
 func expandFields(e *EntityInfo, fis []*reflectx.FieldInfo) {
+	//for index, fi := range fis {
+	//	fmt.Printf("1: %d %+v %+v %+v\n", index, fi.Field.Name, fi.Name, fi)
+	//}
+	for _, fi := range fis {
 
-	for index, fi := range fis {
-		if len(fi.Children) < 0 {
-			expandFields(e, fi.Children)
+		//if fi.Field.Anonymous {
+		//	if len(fi.Children) > 0 {
+		//		expandFields(e, fi.Children)
+		//	}
+		//	continue
+		//}
+		//如果index路径2个以上，并且其父Field不为嵌入式struct，那么该Field就为结构体字段，忽略
+		if len(fi.Index) > 1 && !fi.Parent.Embedded && !fi.Field.Anonymous {
+			continue
 		}
+		if strings.Contains(fi.Path, ".") {
+			continue
+		}
+		//如果是嵌入式结构体，忽略结构体本身
+		if fi.Embedded || fi.Field.Anonymous {
+			continue
+		}
+
 		fd := &FieldModel{}
 
 		fd.FieldInfo = *fi
 		fd.FieldName = fi.Field.Name
-		//fmt.Printf("%+v %+v %+v\n", fd.Field.Name, fd.Name, fd)
 		if fi.Field.Name == "" {
 			continue
 		}
-		if fi.Name == "" {
-			continue
-		}
+		//if fi.Name == "" {
+		//	continue
+		//}
+
 		fd.ColumnName = SnakeString(fd.FieldName)
 		fd.FieldType = fi.Field
 		fd.TypeFullName = fd.Field.Type.Name()
+
 		tag := fi.Field.Tag
 		tval := tag.Get("db")
-		tvals := strings.Split(tval, ",")
-		for k, v := range tvals {
-			if v == "-" {
-				continue
-			}
-			if strings.ToLower(v) == "omitempty" {
-				fd.Omitempty = true
-			}
-			if k == 0 {
-				if v != "" {
-					fd.ColumnName = v
+		if tval != "" {
+
+			tvals := strings.Split(tval, ",")
+			for k, v := range tvals {
+				if v == "-" {
+					continue
 				}
-			} else {
-				fi.Options[v] = v
-			}
-			if strings.ToLower(v) == "pk" || strings.ToLower(v) == "id" { //
-				fd.IsPk = true
-			}
-			if strings.ToLower(v) == "uni" || strings.ToLower(v) == "unique" {
-				fd.IsUnique = true
+				if strings.ToLower(v) == "omitempty" {
+					fd.Omitempty = true
+				}
+				if k == 0 {
+					if v != "" {
+						fd.ColumnName = v
+					}
+				} else {
+					fi.Options[v] = v
+				}
+				if strings.ToLower(v) == "pk" || strings.ToLower(v) == "id" { //
+					fd.IsPk = true
+				}
+				if strings.ToLower(v) == "uni" || strings.ToLower(v) == "unique" {
+					fd.IsUnique = true
+				}
 			}
 		}
 		if fi.Field.Type.Kind() == reflect.Struct {
-			fd.Embedded = true
+			fd.EmbeddedStruct = true
 		}
 		if fi.Field.Anonymous {
 			fd.Omitempty = true
 		}
+		//fmt.Printf("2: %d %+v %+v %+v\n", index, fi.Field.Name, fi.Name, fi)
 
-		fd.FieldIndex = index
+		fd.FieldIndex = fi.Index
 		fd.ParentFieldType = fi.Parent.Field
 		e.Append(fd)
 
@@ -263,7 +286,7 @@ func getFeilds(entity *EntityInfo, ind reflect.Type, anonymous bool) {
 		if sf.Type.Kind() == reflect.Struct || sf.Anonymous {
 			getFeilds(entity, sf.Type, true)
 		} else {
-			fi := GetField(i, sf, anonymous)
+			fi := GetField(sf, anonymous)
 			fi.ParentFieldName = sf.Name
 			if fi != nil {
 				entity.Append(fi)
@@ -275,7 +298,7 @@ func getFeilds(entity *EntityInfo, ind reflect.Type, anonymous bool) {
 
 }
 
-func GetField(index int, sf reflect.StructField, anonymous bool) *FieldModel {
+func GetField(sf reflect.StructField, anonymous bool) *FieldModel {
 	fi := &FieldModel{}
 	fi.Options = make(map[string]string)
 	name := sf.Name
@@ -285,22 +308,32 @@ func GetField(index int, sf reflect.StructField, anonymous bool) *FieldModel {
 	fi.TypeFullName = sf.Type.Name()
 	tag := sf.Tag
 	tval := tag.Get("db")
-	tvals := strings.Split(tval, ",")
-	for k, v := range tvals {
-		if v == "-" {
-			return nil
-		}
-		if v == "omitempty" {
-			fi.Omitempty = true
-		}
-		if k == 0 {
-			fi.ColumnName = v
-		} else {
-			fi.Options[v] = v
+	if tval != "" {
+		tvals := strings.Split(tval, ",")
+		for k, v := range tvals {
+			if v == "-" {
+				continue
+			}
+			if strings.ToLower(v) == "omitempty" {
+				fi.Omitempty = true
+			}
+			if k == 0 {
+				if v != "" {
+					fi.ColumnName = v
+				}
+			} else {
+				fi.Options[v] = v
+			}
+			if strings.ToLower(v) == "pk" || strings.ToLower(v) == "id" { //
+				fi.IsPk = true
+			}
+			if strings.ToLower(v) == "uni" || strings.ToLower(v) == "unique" {
+				fi.IsUnique = true
+			}
 		}
 	}
 	fi.Embedded = anonymous
-	fi.FieldIndex = index
+	fi.FieldIndex = sf.Index
 
 	//fmt.Println("####", index, tval, tvals)
 

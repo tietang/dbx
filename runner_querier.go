@@ -45,7 +45,7 @@ func (r *Runner) FindExampleContext(ctx context.Context, querier interface{}, re
 	params := make([]interface{}, 0)
 	wheres := make([]string, 0)
 	for _, fd := range entity.Columns {
-		if fd.Field.Anonymous {
+		if fd.Field.Anonymous || fd.Embedded {
 			continue
 		}
 		lastv := ind.FieldByIndex(fd.Index)
@@ -189,7 +189,7 @@ func (r *Runner) GetOneContext(ctx context.Context, out interface{}) (ok bool, e
 	whereArgs := make([]interface{}, 0)
 	wheres := make([]string, 0)
 	for _, fd := range entity.Columns {
-		if fd.Field.Anonymous {
+		if fd.Field.Anonymous || fd.Embedded {
 			continue
 		}
 

@@ -55,7 +55,8 @@ func (r *Runner) InsertContext(ctx context.Context, model interface{}) (rs sql.R
 	params := make([]interface{}, 0)
 
 	for _, fd := range entity.Columns {
-		if fd.Field.Anonymous {
+
+		if fd.Field.Anonymous || fd.Embedded {
 			continue
 		}
 		lastv := ind.FieldByIndex(fd.Index)
@@ -92,7 +93,8 @@ func (r *Runner) UpdateContext(ctx context.Context, model interface{}) (rs sql.R
 	params, whereArgs := make([]interface{}, 0), make([]interface{}, 0)
 	wheres := make([]string, 0)
 	for _, fd := range entity.Columns {
-		if fd.Field.Anonymous {
+
+		if fd.Field.Anonymous || fd.Embedded {
 			continue
 		}
 		lastv := ind.FieldByIndex(fd.Index)
