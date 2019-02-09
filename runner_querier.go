@@ -113,6 +113,7 @@ func (r *Runner) SelectContext(ctx context.Context, mapper RowsMapper, resultSli
 	}
 
 	rows, err := stmt.QueryContext(ctx, params...)
+	defer rows.Close()
 	if err != nil {
 		return err
 	}
@@ -160,12 +161,14 @@ func (r *Runner) GetContext(ctx context.Context, out interface{}, sql string, pa
 		}(time.Now())
 	}
 	rows, err := r.QueryContext(ctx, sql, params...)
+	defer rows.Close()
 	if err != nil {
 		return false, err
 	}
 	if rows.Next() {
 		out, err = r.rowsMapping(out, rows)
 		if err != nil {
+
 			return false, err
 		}
 	} else {
@@ -175,6 +178,7 @@ func (r *Runner) GetContext(ctx context.Context, out interface{}, sql string, pa
 	if rows.Next() {
 		message = "warn: has more data."
 	}
+	rows.Close()
 	return true, err
 }
 
