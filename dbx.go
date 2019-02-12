@@ -91,7 +91,6 @@ func (r *Database) Tx(fn func(run *TxRunner) error) error {
 		tx.Rollback()
 		return err
 	}
-
 	return err
 }
 

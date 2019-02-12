@@ -16,6 +16,9 @@ func (r *Runner) Exec(sql string, params ...interface{}) (rs sql.Result, err err
 
 func (r *Runner) Execute(sql string, params ...interface{}) (lastInsertId, rowsAffected int64, err error) {
 	rs, err := r.Exec(sql, params...)
+	if err != nil {
+		return 0, 0, err
+	}
 	lastInsertId, err = rs.LastInsertId()
 	if err != nil {
 		return 0, 0, err
@@ -42,6 +45,7 @@ func (r *Runner) ExecContext(ctx context.Context, sql string, params ...interfac
 		return nil, err
 	}
 	rs, err = stmt.ExecContext(ctx, params...)
+
 	return rs, err
 }
 
