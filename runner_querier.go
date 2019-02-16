@@ -113,10 +113,11 @@ func (r *Runner) SelectContext(ctx context.Context, mapper RowsMapper, resultSli
 	}
 
 	rows, err := stmt.QueryContext(ctx, params...)
-	defer rows.Close()
+
 	if err != nil {
 		return err
 	}
+	defer rows.Close()
 	//e := rowsMapping.GetEntity(slice)
 	dstv := reflect.ValueOf(resultSlice)
 	slicev := dstv.Elem()
@@ -161,10 +162,10 @@ func (r *Runner) GetContext(ctx context.Context, out interface{}, sql string, pa
 		}(time.Now())
 	}
 	rows, err := r.QueryContext(ctx, sql, params...)
-	defer rows.Close()
 	if err != nil {
 		return false, err
 	}
+	defer rows.Close()
 	if rows.Next() {
 		out, err = r.rowsMapping(out, rows)
 		if err != nil {
