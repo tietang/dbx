@@ -45,8 +45,11 @@ func (r *Runner) FindExampleContext(ctx context.Context, querier interface{}, re
 	params := make([]interface{}, 0)
 	wheres := make([]string, 0)
 	for _, fd := range entity.Columns {
+		if fd.Field.Anonymous || fd.Embedded {
+			continue
+		}
 		lastv := ind.FieldByIndex(fd.Index)
-		names += fd.ColumnName + ","
+		names += "`" + fd.ColumnName + "`,"
 		if lastv.Kind() == reflect.Ptr && lastv.IsNil() {
 			continue
 		}
@@ -56,9 +59,8 @@ func (r *Runner) FindExampleContext(ctx context.Context, querier interface{}, re
 		if fd.ColumnName == "" || lastv.Interface() == fd.Zero.Interface() {
 			continue
 		}
-		//fmt.Printf("0000:   %#v==%#v    %#v  %#v    %#v  %#v  \n", lastv, fd.Zero, lastv.Interface() == fd.Zero.Interface(), lastv.IsValid(), (lastv.Kind() == reflect.Ptr && lastv.IsNil()))
 
-		wheres = append(wheres, fd.ColumnName+"=?")
+		wheres = append(wheres, "`"+fd.ColumnName+"`=?")
 		params = append(params, lastv.Interface())
 
 	}
@@ -68,7 +70,7 @@ func (r *Runner) FindExampleContext(ctx context.Context, querier interface{}, re
 	}
 
 	where := strings.Join(wheres, " and ")
-	query := fmt.Sprintf("select %s from %s where %s", names[0:len(names)-1], entity.TableName, where)
+	query := fmt.Sprintf("select %s from `%s` where %s", names[0:len(names)-1], entity.TableName, where)
 
 	if r.LoggingEnabled() {
 		defer func(start time.Time) {
@@ -112,6 +114,7 @@ func (r *Runner) SelectContext(ctx context.Context, mapper RowsMapper, resultSli
 	defer stmt.Close()
 
 	rows, err := stmt.QueryContext(ctx, params...)
+
 	if err != nil {
 		return err
 	}
@@ -139,11 +142,11 @@ func (r *Runner) SelectContext(ctx context.Context, mapper RowsMapper, resultSli
 	return err
 }
 
-func (r *Runner) Get(out interface{}, sql string, params ...interface{}) (err error) {
+func (r *Runner) Get(out interface{}, sql string, params ...interface{}) (ok bool, err error) {
 	return r.GetContext(context.Background(), out, sql, params...)
 }
 
-func (r *Runner) GetContext(ctx context.Context, out interface{}, sql string, params ...interface{}) (err error) {
+func (r *Runner) GetContext(ctx context.Context, out interface{}, sql string, params ...interface{}) (ok bool, err error) {
 	message := ""
 
 	if r.LoggingEnabled() {
@@ -161,35 +164,43 @@ func (r *Runner) GetContext(ctx context.Context, out interface{}, sql string, pa
 	}
 	rows, err := r.QueryContext(ctx, sql, params...)
 	if err != nil {
-		return err
+		return false, err
 	}
 	defer rows.Close()
 	if rows.Next() {
 		out, err = r.rowsMapping(out, rows)
 		if err != nil {
-			return err
+
+			return false, err
 		}
+	} else {
+		return false, err
 	}
 
 	if rows.Next() {
 		message = "warn: has more data."
 	}
-	return err
+	return true, err
 }
 
-func (r *Runner) GetOne(out interface{}) (err error) {
+func (r *Runner) GetOne(out interface{}) (ok bool, err error) {
 	return r.GetOneContext(context.Background(), out)
 }
 
-func (r *Runner) GetOneContext(ctx context.Context, out interface{}) (err error) {
+func (r *Runner) GetOneContext(ctx context.Context, out interface{}) (ok bool, err error) {
 	entity, ind := r.GetEntity(out)
 	//fmt.Printf("%+v  \n", model)
 	names := ""
 	whereArgs := make([]interface{}, 0)
 	wheres := make([]string, 0)
 	for _, fd := range entity.Columns {
+		if fd.Field.Anonymous || fd.Embedded {
+			continue
+		}
+
 		lastv := ind.FieldByIndex(fd.Index)
-		names += fd.ColumnName + ","
+		names += "`" + fd.ColumnName + "`,"
+
 		if lastv.Kind() == reflect.Ptr && lastv.IsNil() {
 			continue
 		}
@@ -203,19 +214,18 @@ func (r *Runner) GetOneContext(ctx context.Context, out interface{}) (err error)
 		if lastv.Interface() == fd.Zero.Interface() {
 			continue
 		}
-
 		if fd.IsUnique {
-			wheres = append(wheres, fd.ColumnName+"=? ")
+			wheres = append(wheres, "`"+fd.ColumnName+"`=? ")
 			whereArgs = append(whereArgs, lastv.Interface())
 		}
 		if fd.IsPk {
-			wheres = append(wheres, fd.ColumnName+"=? ")
+			wheres = append(wheres, "`"+fd.ColumnName+"`=? ")
 			whereArgs = append(whereArgs, lastv.Interface())
 		}
 
 	}
 	where := strings.Join(wheres, " and ")
-	query := fmt.Sprintf("select %s from %s where %s", names[0:len(names)-1], entity.TableName, where)
+	query := fmt.Sprintf("select %s from `%s` where %s", names[0:len(names)-1], entity.TableName, where)
 
 	if len(wheres) == 0 {
 		err := errors.New("no unique column for db tag. example: `db:\"order_id,unique\"` : " + ind.Kind().String())
@@ -231,7 +241,7 @@ func (r *Runner) GetOneContext(ctx context.Context, out interface{}) (err error)
 				})
 			}(time.Now())
 		}
-		return err
+		return false, err
 	}
 
 	return r.GetContext(ctx, out, query, whereArgs...)

@@ -14,9 +14,24 @@ var db *dbx.Database
 
 func init() {
 	//url := "root:123456@tcp(192.168.232.175:3306)/po0?charset=utf8&parseTime=true"
-	url := "root:111111@tcp(172.16.1.248:3306)/po0?charset=utf8&parseTime=true"
+	settings := dbx.Settings{
+		DriverName: "mysql",
+		User:       "po",
+		Password:   "111111",
+		Host:       "192.168.232.175:3306",
+		//Host:            "172.16.1.248:3306",
+		Database:        "po0",
+		MaxOpenConns:    10,
+		MaxIdleConns:    2,
+		ConnMaxLifetime: time.Minute * 30,
+		LoggingEnabled:  true,
+		Options: map[string]string{
+			"charset":   "utf8",
+			"parseTime": "true",
+		},
+	}
 	var err error
-	db, err = dbx.Open("mysql", url)
+	db, err = dbx.Open(settings)
 	if err != nil {
 		panic(err)
 	}
@@ -32,7 +47,7 @@ func main() {
 func FindExampleContext(db *dbx.Database, envelopeNo *string) {
 
 	var egs []EnvelopeGoods
-	err := db.FindTest(&egs, "select * from red_envelope_goods where id<=? ", 111)
+	err := db.Find(&egs, "select * from red_envelope_goods where id<=? ", 111)
 	fmt.Println(err)
 	for key, value := range egs {
 		fmt.Printf("%+v %+v \n", key, value)
