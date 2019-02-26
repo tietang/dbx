@@ -86,15 +86,19 @@ func (r *Database) Tx(fn func(run *TxRunner) error) error {
 	runner.EntityMapper = r.EntityMapper
 	runner.LoggerSettings = r.LoggerSettings
 	runner.ILogger = r.Logger()
-	tx.Exec("SET AUTOCOMMIT=0")
 	if err := fn(runner); err != nil {
-		e := r.rollback(tx)
+		e := tx.Rollback()
 		if e != nil {
 			return err
 		}
 		return err
 	}
-	err = r.commit(tx)
+
+	err = tx.Commit()
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
 	return err
 }
 
