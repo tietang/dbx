@@ -41,6 +41,7 @@ func (r *Runner) ExecContext(ctx context.Context, sql string, params ...interfac
 	if err != nil {
 		return nil, err
 	}
+	defer stmt.Close()
 	rs, err = stmt.ExecContext(ctx, params...)
 	return rs, err
 }
@@ -129,6 +130,7 @@ func (r *Runner) Metadats(ctx context.Context, schema, tableName string) map[str
 	if err != nil {
 		//return nil, err
 	}
+	defer stmt.Close()
 	rows, err := stmt.QueryContext(ctx, tableName, schema)
 	values := make(map[string]string)
 	for rows.Next() {

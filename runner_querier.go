@@ -109,11 +109,13 @@ func (r *Runner) SelectContext(ctx context.Context, mapper RowsMapper, resultSli
 	if err != nil {
 		return err
 	}
+	defer stmt.Close()
 
 	rows, err := stmt.QueryContext(ctx, params...)
 	if err != nil {
 		return err
 	}
+	defer rows.Close()
 	//e := rowsMapping.GetEntity(slice)
 	dstv := reflect.ValueOf(resultSlice)
 	slicev := dstv.Elem()
@@ -161,6 +163,7 @@ func (r *Runner) GetContext(ctx context.Context, out interface{}, sql string, pa
 	if err != nil {
 		return err
 	}
+	defer rows.Close()
 	if rows.Next() {
 		out, err = r.rowsMapping(out, rows)
 		if err != nil {
@@ -240,7 +243,7 @@ func (r *Runner) Query(sql string, params ...interface{}) (*sql.Rows, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	defer stmt.Close()
 	return stmt.Query(params...)
 }
 func (r *Runner) QueryContext(ctx context.Context, sql string, params ...interface{}) (rows *sql.Rows, err error) {
@@ -260,6 +263,7 @@ func (r *Runner) QueryContext(ctx context.Context, sql string, params ...interfa
 	if err != nil {
 		return nil, err
 	}
+	defer stmt.Close()
 	return stmt.QueryContext(ctx, params...)
 }
 
@@ -284,6 +288,7 @@ func (r *Runner) QueryRowContext(ctx context.Context, sql string, params ...inte
 	if err != nil {
 		return nil
 	}
+	defer stmt.Close()
 	row := stmt.QueryRowContext(ctx, params...)
 	return row
 }
