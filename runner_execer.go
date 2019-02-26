@@ -46,7 +46,6 @@ func (r *Runner) ExecContext(ctx context.Context, sql string, params ...interfac
 	}
 	defer stmt.Close()
 	rs, err = stmt.ExecContext(ctx, params...)
-
 	return rs, err
 }
 
@@ -151,27 +150,4 @@ func (r *Runner) UpdateContext(ctx context.Context, model interface{}) (rs sql.R
 
 	sql = fmt.Sprintf("update `%s` set %s where %s", entity.TableName, names[0:len(names)-1], where)
 	return r.ExecContext(ctx, sql, params...)
-}
-
-func (r *Runner) Metadats(ctx context.Context, schema, tableName string) map[string]string {
-	sql := "SELECT c.COLUMN_NAM c.COLUMN_KEY from information_schema.`COLUMNS` c " +
-		"WHERE c.TABLE_SCHEMA=? and c.TABLE_NAME=? " +
-		"ORDER BY c.ORDINAL_POSITION"
-	stmt, err := r.Prepare(sql)
-	if err != nil {
-		//return nil, err
-	}
-	defer stmt.Close()
-	rows, err := stmt.QueryContext(ctx, tableName, schema)
-	values := make(map[string]string)
-	for rows.Next() {
-		k, v := "", ""
-		err := rows.Scan(k, v)
-		if err != nil {
-			return nil
-		}
-		values[k] = v
-	}
-	return values
-
 }
