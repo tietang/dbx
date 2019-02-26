@@ -8,40 +8,35 @@ import (
 	"github.com/segmentio/ksuid"
 	"github.com/shopspring/decimal"
 	. "github.com/smartystreets/goconvey/convey"
-	"github.com/tietang/dbx"
-	"strconv"
 	"testing"
-	"time"
 )
 
-var db *dbx.Database
+func TestGetAccount(t *testing.T) {
 
-func init() {
-	settings := dbx.Settings{
-		DriverName: "mysql",
-		User:       "root",
-		Password:   "123456",
-		Host:       "192.168.232.175:3306",
-		//Host:            "172.16.1.248:3306",
-		Database:        "po0",
-		MaxOpenConns:    10,
-		MaxIdleConns:    2,
-		ConnMaxLifetime: time.Minute * 30,
-		LoggingEnabled:  true,
-		Options: map[string]string{
-			"charset":   "utf8",
-			"parseTime": "true",
-		},
-	}
-	sqlDb, err := dbx.Open(settings)
-	if err != nil {
-		panic(err)
-	}
-	db = sqlDb
-	db.SetLogging(true)
-	db.RegisterTable(&EnvelopeGoods{}, "red_envelope_goods")
+	Convey("写入测试", t, func() {
+		Convey("正常", func() {
+			a := &Account{
+				Balance: decimal.NewFromFloat(100), Status: 1,
+				UserId:    ksuid.New().Next().String(),
+				Username:  sql.NullString{String: "测试用户1", Valid: true},
+				AccountNo: ksuid.New().Next().String(),
+			}
+			rs, err := db.Insert(a)
+			So(err, ShouldBeNil)
+			fmt.Printf("AccountNo=%s\n", a.AccountNo)
+			So(rs, ShouldNotBeNil)
+			q := &Account{AccountNo: a.AccountNo}
+			ok, err := db.GetOne(q)
+			So(err, ShouldBeNil)
+			So(ok, ShouldBeTrue)
+			So(q.AccountNo, ShouldEqual, a.AccountNo)
+			So(q.Balance.String(), ShouldEqual, a.Balance.String())
+			So(q.UserId, ShouldEqual, a.UserId)
+			So(q.CreatedAt, ShouldNotBeNil)
+			So(q.UpdatedAt, ShouldNotBeNil)
+		})
+	})
 }
-
 func TestInsert(t *testing.T) {
 	Convey("写入测试", t, func() {
 		Convey("正常", func() {
@@ -136,73 +131,6 @@ func TestUpdate(t *testing.T) {
 
 		})
 	})
-}
-
-func newEnvelopeGoods(seed int) EnvelopeGoods {
-	deedStr := strconv.Itoa(seed)
-	g := EnvelopeGoods{
-		EnvelopeType: 1,
-		Username:     "test-name" + deedStr,
-		UserId:       ksuid.New().Next().String(),
-		Blessing:     sql.NullString{String: "test-blessing" + deedStr, Valid: true},
-		Amount:       decimal.NewFromFloat(100.01 + float64(seed)),
-		Quantity:     10 + seed,
-		Status:       1 + seed,
-		OrderType:    1 + seed,
-		PayStatus:    1 + seed,
-	}
-	amountOne := decimal.NewFromFloat(10.01 + float64(seed))
-	g.AmountOne = &amountOne
-	EnvelopeNo := ksuid.New().Next().String()
-	g.EnvelopeNo = &EnvelopeNo
-	t := time.Now().Add(time.Hour * 24)
-	g.ExpiredAt = &t
-
-	g.RemainAmount = g.Amount
-	g.RemainQuantity = g.Quantity
-	return g
-}
-
-type EnvelopeGoods struct {
-	Inventory
-	EnvelopeNo   *string `db:"envelope_no,uni"`         //红包编号,红包唯一标识
-	EnvelopeType int                                    //`db:"envelope_type"`        //红包类型：普通红包，碰运气红包
-	Username     string `db:"username"`                 //用户名称
-	UserId       string                                 //`db:"user_id"`              //用户编号, 红包所属用户
-	Blessing     sql.NullString  `db:"blessing"`        //祝福语
-	Amount       decimal.Decimal `db:"amount"`          //红包总金额
-	AmountOne    *decimal.Decimal                       //`db:"amount_one"`           //单个红包金额，碰运气红包无效
-	Quantity     int `db:"quantity"`                    //红包总数量
-	ExpiredAt    *time.Time                             //`db:"expired_at"`           //过期时间
-	Status       int `db:"status"`                      //红包状态：0红包初始化，1启用，2失效
-	OrderType    int                                    //`db:"order_type"`           //订单类型：发布单、退款单
-	PayStatus    int                                    //`db:"pay_status"`           //支付状态：未支付，支付中，已支付，支付失败
-	CreatedAt    *time.Time `db:"created_at,omitempty"` //创建时间
-	UpdatedAt    time.Time  `db:"updated_at,omitempty"` //更新时间
-}
-
-//type EnvelopeGoods struct {
-//	Inventory
-//	EnvelopeNo   *string          `db:"envelope_no,uni"`      //红包编号,红包唯一标识
-//	EnvelopeType int              `db:"envelope_type"`        //红包类型：普通红包，碰运气红包
-//	Username     string           `db:"username"`             //用户名称
-//	UserId       string           `db:"user_id"`              //用户编号, 红包所属用户
-//	Blessing     sql.NullString   `db:"blessing"`             //祝福语
-//	Amount       decimal.Decimal  `db:"amount"`               //红包总金额
-//	AmountOne    *decimal.Decimal `db:"amount_one"`           //单个红包金额，碰运气红包无效
-//	Quantity     int              `db:"quantity"`             //红包总数量
-//	ExpiredAt    *time.Time       `db:"expired_at"`           //过期时间
-//	Status       int              `db:"status"`               //红包状态：0红包初始化，1启用，2失效
-//	OrderType    int              `db:"order_type"`           //订单类型：发布单、退款单
-//	PayStatus    int              `db:"pay_status"`           //支付状态：未支付，支付中，已支付，支付失败
-//	CreatedAt    *time.Time       `db:"created_at,omitempty"` //创建时间
-//	UpdatedAt    time.Time        `db:"updated_at,omitempty"` //更新时间
-//}
-
-type Inventory struct {
-	EnvelopeNo     string          `db:"envelope_no"`     //红包编号,红包唯一标识
-	RemainAmount   decimal.Decimal `db:"remain_amount"`   //红包剩余金额额
-	RemainQuantity int             `db:"remain_quantity"` //红包剩余数量
 }
 
 var Drop = "DROP TABLE IF EXISTS `red_envelope_goods`;"

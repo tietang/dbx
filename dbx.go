@@ -1,6 +1,7 @@
 package dbx
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"github.com/tietang/dbx/mapping"
@@ -63,7 +64,7 @@ func Open(settings Settings) (db *Database, err error) {
 			db.DefaultAutoCommit = false
 		}
 	}
-
+	db.ping()
 	return db, err
 }
 
@@ -96,7 +97,6 @@ func (r *Database) Tx(fn func(run *TxRunner) error) error {
 
 	err = tx.Commit()
 	if err != nil {
-		tx.Rollback()
 		return err
 	}
 	return err
@@ -116,6 +116,19 @@ func (r *Database) commit(tx *sql.Tx) error {
 	}
 	err := tx.Commit()
 	return err
+}
+
+func (r *Database) ping() {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	status := "up"
+	if err := r.PingContext(ctx); err != nil {
+		status = "down"
+	}
+	r.Log(&QueryStatus{
+		Message: &status,
+	})
 }
 
 type Settings struct {
