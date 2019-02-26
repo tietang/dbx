@@ -11,9 +11,10 @@ func init() {
 	settings := dbx.Settings{
 		DriverName: "mysql",
 		User:       "root",
-		Password:   "111111",
-		//Host:       "192.168.232.175:3306",
-		Host:            "172.16.1.248:3306",
+		//Password:   "111111",
+		Password:   "123456",
+		Host:       "192.168.232.175:3306",
+		//Host:            "172.16.1.248:3306",
 		Database:        "po0",
 		MaxOpenConns:    10,
 		MaxIdleConns:    2,
