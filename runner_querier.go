@@ -162,7 +162,11 @@ func (r *Runner) GetContext(ctx context.Context, out interface{}, sql string, pa
 			})
 		}(time.Now())
 	}
-	rows, err := r.QueryContext(ctx, sql, params...)
+	stmt, err := r.Prepare(sql)
+	if err != nil {
+		return false, err
+	}
+	rows, err := stmt.QueryContext(ctx, params...)
 	if err != nil {
 		return false, err
 	}
