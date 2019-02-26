@@ -57,6 +57,13 @@ func Open(settings Settings) (db *Database, err error) {
 	db.SetMaxIdleConns(settings.MaxIdleConns)
 	//设置连接最大生存时间
 	db.SetConnMaxLifetime(settings.ConnMaxLifetime)
+	db.DefaultAutoCommit = true
+	if v, ok := settings.Options["autocommit"]; ok {
+		if v == "false" {
+			db.DefaultAutoCommit = false
+		}
+	}
+
 	return db, err
 }
 
@@ -66,6 +73,7 @@ type Database struct {
 	mapping.EntityMapper
 	ILogger
 	LoggerSettings
+	DefaultAutoCommit bool
 }
 
 func (r *Database) Tx(fn func(run *TxRunner) error) error {
@@ -78,19 +86,31 @@ func (r *Database) Tx(fn func(run *TxRunner) error) error {
 	runner.EntityMapper = r.EntityMapper
 	runner.LoggerSettings = r.LoggerSettings
 	runner.ILogger = r.Logger()
+	tx.Exec("SET AUTOCOMMIT=0")
 	if err := fn(runner); err != nil {
-		e := tx.Rollback()
+		e := r.rollback(tx)
 		if e != nil {
 			return err
 		}
 		return err
 	}
+	err = r.commit(tx)
+	return err
+}
 
-	err = tx.Commit()
-	if err != nil {
-		tx.Rollback()
-		return err
+func (r *Database) rollback(tx *sql.Tx) error {
+	if !r.DefaultAutoCommit {
+		tx.Exec("SET AUTOCOMMIT=1")
 	}
+	e := tx.Rollback()
+	return e
+}
+
+func (r *Database) commit(tx *sql.Tx) error {
+	if !r.DefaultAutoCommit {
+		tx.Exec("SET AUTOCOMMIT=1")
+	}
+	err := tx.Commit()
 	return err
 }
 
