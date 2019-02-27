@@ -37,6 +37,7 @@ func TestGetAccount(t *testing.T) {
 		})
 	})
 }
+
 func TestInsert(t *testing.T) {
 	Convey("写入测试", t, func() {
 		Convey("正常", func() {

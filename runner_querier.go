@@ -107,13 +107,15 @@ func (r *Runner) SelectContext(ctx context.Context, mapper RowsMapper, resultSli
 			})
 		}(time.Now())
 	}
-	stmt, err := r.Prepare(sql)
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
-
-	rows, err := stmt.QueryContext(ctx, params...)
+	//stmt, err := r.Prepare(sql)
+	//if err != nil {
+	//	return err
+	//}
+	//defer stmt.Close()
+	//
+	//rows, err := stmt.QueryContext(ctx, params...)
+	//
+	rows, err := r.sqlExecutor.QueryContext(ctx, sql, params...)
 
 	if err != nil {
 		return err
@@ -165,14 +167,17 @@ func (r *Runner) GetContext(ctx context.Context, out interface{}, sql string, pa
 			})
 		}(time.Now())
 	}
-	stmt, err := r.Prepare(sql)
+	//stmt, err := r.Prepare(sql)
+	//if err != nil {
+	//	return false, err
+	//}
+	//rows, err := stmt.QueryContext(ctx, params...)
+
+	rows, err := r.sqlExecutor.QueryContext(ctx, sql, params...)
 	if err != nil {
 		return false, err
 	}
-	rows, err := stmt.QueryContext(ctx, params...)
-	if err != nil {
-		return false, err
-	}
+
 	defer rows.Close()
 	if rows.Next() {
 		out, err = r.rowsMapping(out, rows)
@@ -265,14 +270,15 @@ func (r *Runner) GetOneContext(ctx context.Context, out interface{}) (ok bool, e
 }
 
 func (r *Runner) Query(sql string, params ...interface{}) (*sql.Rows, error) {
-
-	stmt, err := r.Prepare(sql)
-	if err != nil {
-		return nil, err
-	}
-	defer stmt.Close()
-	return stmt.Query(params...)
+	return r.QueryContext(context.Background(), sql, params...)
+	//stmt, err := r.Prepare(sql)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//defer stmt.Close()
+	//return stmt.Query(params...)
 }
+
 func (r *Runner) QueryContext(ctx context.Context, sql string, params ...interface{}) (rows *sql.Rows, err error) {
 	if r.LoggingEnabled() {
 		defer func(start time.Time) {
@@ -286,12 +292,14 @@ func (r *Runner) QueryContext(ctx context.Context, sql string, params ...interfa
 			})
 		}(time.Now())
 	}
-	stmt, err := r.Prepare(sql)
-	if err != nil {
-		return nil, err
-	}
-	defer stmt.Close()
-	return stmt.QueryContext(ctx, params...)
+
+	return r.sqlExecutor.QueryContext(ctx, sql, params...)
+	//stmt, err := r.Prepare(sql)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//defer stmt.Close()
+	//return stmt.QueryContext(ctx, params...)
 }
 
 func (r *Runner) QueryRow(sql string, params ...interface{}) *sql.Row {
@@ -299,7 +307,7 @@ func (r *Runner) QueryRow(sql string, params ...interface{}) *sql.Row {
 }
 
 func (r *Runner) QueryRowContext(ctx context.Context, sql string, params ...interface{}) *sql.Row {
-	stmt, err := r.Prepare(sql)
+	var err error
 	if r.LoggingEnabled() {
 		defer func(start time.Time) {
 			r.Logger().Log(&QueryStatus{
@@ -312,10 +320,12 @@ func (r *Runner) QueryRowContext(ctx context.Context, sql string, params ...inte
 			})
 		}(time.Now())
 	}
-	if err != nil {
-		return nil
-	}
-	defer stmt.Close()
-	row := stmt.QueryRowContext(ctx, params...)
-	return row
+	return r.sqlExecutor.QueryRowContext(ctx, sql, params...)
+
+	//if err != nil {
+	//	return nil
+	//}
+	//defer stmt.Close()
+	//row := stmt.QueryRowContext(ctx, params...)
+	//return row
 }
