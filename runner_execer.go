@@ -40,7 +40,7 @@ func (r *Runner) ExecContext(ctx context.Context, sql string, params ...interfac
 			})
 		}(time.Now())
 	}
-	return r.sqlExecutor.ExecContext(ctx, sql, params)
+	return r.sqlExecutor.ExecContext(ctx, sql, params...)
 
 	//stmt, err := r.Prepare(sql)
 	//if err != nil {
