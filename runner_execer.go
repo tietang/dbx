@@ -40,13 +40,15 @@ func (r *Runner) ExecContext(ctx context.Context, sql string, params ...interfac
 			})
 		}(time.Now())
 	}
-	stmt, err := r.Prepare(sql)
-	if err != nil {
-		return nil, err
-	}
-	defer stmt.Close()
-	rs, err = stmt.ExecContext(ctx, params...)
-	return rs, err
+	return r.sqlExecutor.ExecContext(ctx, sql, params)
+
+	//stmt, err := r.Prepare(sql)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//defer stmt.Close()
+	//rs, err = stmt.ExecContext(ctx, params...)
+	//return rs, err
 }
 
 func (r *Runner) Insert(model interface{}) (rs sql.Result, err error) {

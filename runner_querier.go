@@ -137,6 +137,9 @@ func (r *Runner) SelectContext(ctx context.Context, mapper RowsMapper, resultSli
 			slicev = reflect.Append(slicev, reflect.Indirect(val))
 		}
 	}
+	if err = rows.Err(); err != nil {
+		return err
+	}
 	dstv.Elem().Set(slicev)
 
 	return err
@@ -181,8 +184,18 @@ func (r *Runner) GetContext(ctx context.Context, out interface{}, sql string, pa
 		return false, err
 	}
 
+	if err = rows.Err(); err != nil {
+		return false, err
+	}
+
 	if rows.Next() {
 		message = "warn: has more data."
+		if err = rows.Close(); err != nil {
+			r.Log(&QueryStatus{
+				Err:     err,
+				Message: &message,
+			})
+		}
 	}
 	return true, err
 }
