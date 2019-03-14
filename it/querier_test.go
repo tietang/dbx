@@ -8,12 +8,106 @@ import (
 	"github.com/segmentio/ksuid"
 	"github.com/shopspring/decimal"
 	. "github.com/smartystreets/goconvey/convey"
+	"reflect"
 	"testing"
 )
 
+func TestSlice(t *testing.T) {
+	//redEnvelopeGoodss := make([]EnvelopeGoods, 0)
+	var redEnvelopeGoodss []EnvelopeGoods
+	dstv := reflect.ValueOf(redEnvelopeGoodss)
+	fmt.Println(dstv.Type(), dstv.Kind(), dstv.Interface())
+	ind := reflect.Indirect(dstv)
+	fmt.Println(ind.Type(), ind.Kind())
+	typ := ind.Type()
+	if ind.Kind() == reflect.Slice {
+		etyp := ind.Type().Elem()
+		typ = etyp
+		if typ.Kind() == reflect.Ptr {
+			typ = typ.Elem()
+		}
+	}
+	fmt.Println(typ)
+}
+
+func TestFindPtr(t *testing.T) {
+
+	Convey("查询测试", t, func() {
+		Convey("正常", func() {
+			g0 := newEnvelopeGoods(1)
+			rs, err := db.InsertContext(context.Background(), &g0)
+			So(err, ShouldBeNil)
+			So(rs, ShouldNotBeNil)
+			id, err := rs.LastInsertId()
+			So(err, ShouldBeNil)
+			So(id > 0, ShouldBeTrue)
+			rows, err := rs.RowsAffected()
+			So(err, ShouldBeNil)
+			So(rows, ShouldEqual, 1)
+
+			var redEnvelopeGoodss []EnvelopeGoods
+			query := "select * from red_envelope_goods limit ?,?"
+			err = db.Find(&redEnvelopeGoodss, query, 0, 100)
+
+			So(err, ShouldBeNil)
+			So(len(redEnvelopeGoodss) > 0, ShouldBeTrue)
+			fmt.Println(redEnvelopeGoodss)
+		})
+	})
+}
+
+func TestFindPtrSlice(t *testing.T) {
+
+	Convey("查询测试", t, func() {
+		Convey("正常", func() {
+			g0 := newEnvelopeGoods(1)
+			rs, err := db.InsertContext(context.Background(), &g0)
+			So(err, ShouldBeNil)
+			So(rs, ShouldNotBeNil)
+			id, err := rs.LastInsertId()
+			So(err, ShouldBeNil)
+			So(id > 0, ShouldBeTrue)
+			rows, err := rs.RowsAffected()
+			So(err, ShouldBeNil)
+			So(rows, ShouldEqual, 1)
+
+			var redEnvelopeGoodss []*EnvelopeGoods
+			query := "select * from red_envelope_goods limit ?,?"
+			err = db.Find(&redEnvelopeGoodss, query, 0, 100)
+
+			So(err, ShouldBeNil)
+			So(len(redEnvelopeGoodss) > 0, ShouldBeTrue)
+			fmt.Println(redEnvelopeGoodss)
+		})
+	})
+}
+
+func TestFind(t *testing.T) {
+
+	Convey("查询测试", t, func() {
+		Convey("正常", func() {
+			g0 := newEnvelopeGoods(1)
+			rs, err := db.InsertContext(context.Background(), &g0)
+			So(err, ShouldBeNil)
+			So(rs, ShouldNotBeNil)
+			id, err := rs.LastInsertId()
+			So(err, ShouldBeNil)
+			So(id > 0, ShouldBeTrue)
+			rows, err := rs.RowsAffected()
+			So(err, ShouldBeNil)
+			So(rows, ShouldEqual, 1)
+
+			var redEnvelopeGoodss []EnvelopeGoods
+			query := "select * from red_envelope_goods limit ?,?"
+			err = db.Find(redEnvelopeGoodss, query, 0, 100)
+
+			So(err, ShouldNotBeNil)
+		})
+	})
+}
 func TestGetAccount(t *testing.T) {
 
-	Convey("写入测试", t, func() {
+	Convey("查询测试", t, func() {
 		Convey("正常", func() {
 			a := &Account{
 				Balance: decimal.NewFromFloat(100), Status: 1,

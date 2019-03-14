@@ -18,27 +18,27 @@ import (
 //type RowsMapper func(rows *sql.Rows) (interface{}, error)
 //type RowMapper func(row *sql.Row) (interface{}, error)
 
-func (r *Runner) Find(resultSlice interface{}, query string, params ...interface{}) (err error) {
+func (r *Runner) Find(resultSlicePtr interface{}, query string, params ...interface{}) (err error) {
 	return r.Select(func(rows *sql.Rows) (i interface{}, e error) {
-		return r.rowsMapping(resultSlice, rows)
-	}, resultSlice, query, params...)
+		return r.rowsMapping(resultSlicePtr, rows)
+	}, resultSlicePtr, query, params...)
 }
-func (r *Runner) FindContext(ctx context.Context, resultSlice interface{}, query string, params ...interface{}) (err error) {
+func (r *Runner) FindContext(ctx context.Context, resultSlicePtr interface{}, query string, params ...interface{}) (err error) {
 	return r.SelectContext(ctx, func(rows *sql.Rows) (i interface{}, e error) {
-		return r.rowsMapping(resultSlice, rows)
-	}, resultSlice, query, params...)
+		return r.rowsMapping(resultSlicePtr, rows)
+	}, resultSlicePtr, query, params...)
 }
 
-func (r *Runner) FindTest(resultSlice interface{}, query string, params ...interface{}) (err error) {
+func (r *Runner) FindTest(resultSlicePtr interface{}, query string, params ...interface{}) (err error) {
 	return r.Select(func(rows *sql.Rows) (i interface{}, e error) {
-		return r.rowsMapping(resultSlice, rows)
-	}, resultSlice, query, params...)
+		return r.rowsMapping(resultSlicePtr, rows)
+	}, resultSlicePtr, query, params...)
 }
-func (r *Runner) FindExample(querier interface{}, resultSlice interface{}) (err error) {
-	return r.FindExampleContext(context.Background(), querier, resultSlice)
+func (r *Runner) FindExample(querier interface{}, resultSlicePtr interface{}) (err error) {
+	return r.FindExampleContext(context.Background(), querier, resultSlicePtr)
 }
 
-func (r *Runner) FindExampleContext(ctx context.Context, querier interface{}, resultSlice interface{}) (err error) {
+func (r *Runner) FindExampleContext(ctx context.Context, querier interface{}, resultSlicePtr interface{}) (err error) {
 
 	entity, ind := r.GetEntity(querier)
 	names := ""
@@ -86,15 +86,15 @@ func (r *Runner) FindExampleContext(ctx context.Context, querier interface{}, re
 	}
 
 	return r.SelectContext(ctx, func(rows *sql.Rows) (i interface{}, e error) {
-		return r.rowsMapping(resultSlice, rows)
-	}, resultSlice, query, params...)
+		return r.rowsMapping(resultSlicePtr, rows)
+	}, resultSlicePtr, query, params...)
 }
 
-func (r *Runner) Select(mapper RowsMapper, resultSlice interface{}, sql string, params ...interface{}) (err error) {
-	return r.SelectContext(context.Background(), mapper, resultSlice, sql, params...)
+func (r *Runner) Select(mapper RowsMapper, resultSlicePtr interface{}, sql string, params ...interface{}) (err error) {
+	return r.SelectContext(context.Background(), mapper, resultSlicePtr, sql, params...)
 }
 
-func (r *Runner) SelectContext(ctx context.Context, mapper RowsMapper, resultSlice interface{}, sql string, params ...interface{}) (err error) {
+func (r *Runner) SelectContext(ctx context.Context, mapper RowsMapper, resultSlicePtr interface{}, sql string, params ...interface{}) (err error) {
 	if r.LoggingEnabled() {
 		defer func(start time.Time) {
 			r.Logger().Log(&QueryStatus{
@@ -107,22 +107,17 @@ func (r *Runner) SelectContext(ctx context.Context, mapper RowsMapper, resultSli
 			})
 		}(time.Now())
 	}
-	//stmt, err := r.Prepare(sql)
-	//if err != nil {
-	//	return err
-	//}
-	//defer stmt.Close()
-	//
-	//rows, err := stmt.QueryContext(ctx, params...)
-	//
-	rows, err := r.sqlExecutor.QueryContext(ctx, sql, params...)
 
+	dstv := reflect.ValueOf(resultSlicePtr)
+	if dstv.Kind() != reflect.Ptr {
+		return errors.New("needs a pointer to a slice ")
+	}
+
+	rows, err := r.sqlExecutor.QueryContext(ctx, sql, params...)
 	if err != nil {
 		return err
 	}
 
-	//e := rowsMapping.GetEntity(slice)
-	dstv := reflect.ValueOf(resultSlice)
 	slicev := dstv.Elem()
 	itemT := slicev.Type().Elem()
 
@@ -142,6 +137,7 @@ func (r *Runner) SelectContext(ctx context.Context, mapper RowsMapper, resultSli
 	if err = rows.Err(); err != nil {
 		return err
 	}
+	//ind.Set(slicev)
 	dstv.Elem().Set(slicev)
 
 	return err
