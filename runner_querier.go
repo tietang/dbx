@@ -325,3 +325,14 @@ func (r *Runner) QueryRowContext(ctx context.Context, sql string, params ...inte
 	//row := stmt.QueryRowContext(ctx, params...)
 	//return row
 }
+
+func (r *Runner) GetInt32(sql string, params ...interface{}) (rv int32, err error) {
+	row := r.sqlExecutor.QueryRow(sql, params...)
+	err = row.Scan(&rv)
+	return
+}
+func (r *Runner) GetInt64(sql string, params ...interface{}) (rv int64, err error) {
+	row := r.sqlExecutor.QueryRow(sql, params...)
+	err = row.Scan(&rv)
+	return
+}

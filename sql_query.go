@@ -32,6 +32,9 @@ type mapperExecutor interface {
 	GetContext(ctx context.Context, out interface{}, sql string, params ...interface{}) (ok bool, err error)
 	GetOne(out interface{}) (ok bool, err error)
 	GetOneContext(ctx context.Context, out interface{}) (ok bool, err error)
+
+	GetInt32(sql string, params ...interface{}) (rv int32, err error)
+	GetInt64(sql string, params ...interface{}) (rv int64, err error)
 }
 
 type Scaner interface {
