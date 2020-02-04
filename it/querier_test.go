@@ -132,6 +132,37 @@ func TestGetAccount(t *testing.T) {
 	})
 }
 
+func TestGetAccountById(t *testing.T) {
+	fmt.Println(Create)
+	Convey("查询测试", t, func() {
+		Convey("正常", func() {
+			a := &Account{
+				Balance: decimal.NewFromFloat(100), Status: 1,
+				UserId:    ksuid.New().Next().String(),
+				Username:  sql.NullString{String: "测试用户1", Valid: true},
+				AccountNo: ksuid.New().Next().String(),
+			}
+			rs, err := db.Insert(a)
+			So(err, ShouldBeNil)
+			fmt.Printf("AccountNo=%s\n", a.AccountNo)
+			So(rs, ShouldNotBeNil)
+			id, err := rs.LastInsertId()
+			So(id, ShouldBeGreaterThanOrEqualTo, 0)
+			So(err, ShouldBeNil)
+			q := &Account{Id: id}
+			ok, err := db.GetOne(q)
+			So(err, ShouldBeNil)
+			So(ok, ShouldBeTrue)
+			So(q.Id, ShouldEqual, id)
+			So(q.AccountNo, ShouldEqual, a.AccountNo)
+			So(q.Balance.String(), ShouldEqual, a.Balance.String())
+			So(q.UserId, ShouldEqual, a.UserId)
+			So(q.CreatedAt, ShouldNotBeNil)
+			So(q.UpdatedAt, ShouldNotBeNil)
+		})
+	})
+}
+
 func TestInsert(t *testing.T) {
 	Convey("写入测试", t, func() {
 		Convey("正常", func() {

@@ -225,7 +225,7 @@ func (r *Runner) GetOneContext(ctx context.Context, out interface{}) (ok bool, e
 		if !lastv.IsValid() {
 			continue
 		}
-		if fd.ColumnName == "" || fd.Omitempty {
+		if fd.ColumnName == "" {
 			continue
 		}
 
