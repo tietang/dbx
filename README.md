@@ -109,6 +109,70 @@ db.RegisterTable(&Order{}, "t_order")
 
 ```
 
+批量插入：推荐原生方法，性能好
+
+方法1： dbx 100%支持原生，所以可以使用原生的方法来批量执行
+
+```go
+rawInsertBaseSQL   = "INSERT INTO `model` (`name`, `title`, `fax`, `web`, `age`, `right`, `counter`) VALUES "
+rawInsertValuesSQL = "(?, ?, ?, ?, ?, ?, ?)"
+rawInsertSQL       = rawInsertBaseSQL + rawInsertValuesSQL
+ 
+query := rawInsertBaseSQL + strings.Repeat(rawInsertValuesSQL+",", len(ms)-1) + rawInsertValuesSQL
+args := make([]interface{}, len(ms)*nFields)
+for j := range ms {
+	offset := j * nFields
+	args[offset+0] = ms[j].Name
+	args[offset+1] = ms[j].Title
+	args[offset+2] = ms[j].Fax
+	args[offset+3] = ms[j].Web
+	args[offset+4] = ms[j].Age
+	args[offset+5] = ms[j].Right
+	args[offset+6] = ms[j].Counter
+}
+_, _, err := database.Execute(query, args...)
+if err != nil {
+	fmt.Println(err)
+	b.FailNow()
+}
+
+```
+
+方法2：使用事务特性，在同一事务中执行
+
+```go
+
+err := db.Tx(func(runner *dbx.TxRunner) error {
+
+			for _, model := range ms {
+				//插入
+				rs, err := runner.Insert(model)
+				So(err, ShouldBeNil)
+				So(rs, ShouldNotBeNil)
+			}
+
+			return nil
+
+		})
+		
+		
+```
+
+
+### 如何插入emoji符号？
+
+1. 在连接配置参数中设置字符集为：utf8mb4
+
+```go
+Options: map[string]string{
+	//"charset":   "utf8",
+	"charset":   "utf8mb4",
+	"collation": "utf8mb4_general_ci",
+	"parseTime": "true",
+},
+```
+2. 确保数据库表字段和连接配置参数一致，建议将database设置为utf8mb4 / utf8mb4_general_ci,这样在建表和建字段时使用默认字符集。如果是已经在使用的数据库，将需要插入emoji字符的字段设置utf8mb4/utf8mb4_general_ci即可。
+
 
 
 ### 性能比较
