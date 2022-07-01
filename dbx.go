@@ -133,6 +133,7 @@ func (r *Database) ping() {
 
 type Settings struct {
 	DriverName      string
+	Protocol        string
 	User            string
 	Password        string
 	Database        string
@@ -150,6 +151,9 @@ func (s *Settings) DataSourceName() string {
 		queryString += key + "=" + value + "&"
 	}
 	ustr := fmt.Sprintf("%s:%s@tcp(%s)/%s?%s", s.User, s.Password, s.Host, s.Database, queryString)
+	if s.Protocol == "http" {
+		ustr = fmt.Sprintf("http://%s:%s@%s/%s?%s", s.User, s.Password, s.Host, s.Database, queryString)
+	}
 
 	return ustr
 }
@@ -159,6 +163,8 @@ func (s *Settings) ShortDataSourceName() string {
 		queryString += key + "=" + value + "&"
 	}
 	ustr := fmt.Sprintf("%s:***@tcp(%s)/%s?%s", s.User, s.Host, s.Database, queryString)
-
+	if s.Protocol == "http" {
+		ustr = fmt.Sprintf("http://%s:***@%s/%s?%s", s.User, s.Host, s.Database, queryString)
+	}
 	return ustr
 }
