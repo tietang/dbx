@@ -6,6 +6,7 @@
 2. 高性能, 支持orm的基础上，最大限度的减少性能损耗，适用于高性能场景的数据库查询。
 3. 自动表名和字段名称映射，默认自动把驼峰命名转换成下划线命名，比如 OrderItem -> order_item
 4. 支持自定义表名和字段名称映射
+5. 支持clickhouse http协议驱动：github.com/mailru/go-clickhouse/v2
  
 
  
