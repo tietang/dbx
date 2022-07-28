@@ -3,6 +3,7 @@ module github.com/tietang/dbx
 go 1.12
 
 require (
+	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/segmentio/ksuid v1.0.2
