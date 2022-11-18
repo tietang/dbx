@@ -40,3 +40,17 @@ type mapperExecutor interface {
 type Scaner interface {
 	Scan(dest ...interface{}) error
 }
+
+type sqlPrepareExecutor interface {
+	Query(args ...interface{}) (*sql.Rows, error)
+	QueryContext(ctx context.Context, args ...interface{}) (*sql.Rows, error)
+	QueryRow(args ...interface{}) *sql.Row
+	QueryRowContext(ctx context.Context, args ...interface{}) *sql.Row
+	Exec(args ...interface{}) (sql.Result, error)
+	ExecContext(ctx context.Context, args ...interface{}) (sql.Result, error)
+}
+
+type mapperPrepareExecutor interface {
+	Execute(params ...interface{}) (rowsAffected int64, err error)
+	ExecuteContext(ctx context.Context, params ...interface{}) (rowsAffected int64, err error)
+}

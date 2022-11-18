@@ -5,30 +5,31 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/tietang/dbx/mapping"
+	"log"
 	"time"
 )
 
-// settings := dbx.Settings{
-//        DriverName: "mysql",
-//        User:       "root",
-//        Password:   "123456",
-//        Host:       "192.168.232.175:3306",
-//        //Host:            "172.16.1.248:3306",
-//        Database:        "po0",
-//        MaxOpenConns:    10,
-//        MaxIdleConns:    2,
-//        ConnMaxLifetime: time.Minute * 30,
-//        LoggingEnabled:  true,
-//        Options: map[string]string{
-//            "charset":   "utf8",
-//            "parseTime": "true",
-//        },
-//    }
-//    var err error
-//    db, err = dbx.Open(settings)
-//    if err != nil {
-//        panic(err)
-//    }
+//	settings := dbx.Settings{
+//	       DriverName: "mysql",
+//	       User:       "root",
+//	       Password:   "123456",
+//	       Host:       "192.168.232.175:3306",
+//	       //Host:            "172.16.1.248:3306",
+//	       Database:        "po0",
+//	       MaxOpenConns:    10,
+//	       MaxIdleConns:    2,
+//	       ConnMaxLifetime: time.Minute * 30,
+//	       LoggingEnabled:  true,
+//	       Options: map[string]string{
+//	           "charset":   "utf8",
+//	           "parseTime": "true",
+//	       },
+//	   }
+//	   var err error
+//	   db, err = dbx.Open(settings)
+//	   if err != nil {
+//	       panic(err)
+//	   }
 var _ mapperExecutor = new(Database)
 var _ sqlExecutor = new(Database)
 var _ mapping.EntityMapper = new(Database)
@@ -85,6 +86,36 @@ func (r *Database) Tx(fn func(run *TxRunner) error) error {
 	}
 	runner := NewTxRunner(tx)
 	runner.EntityMapper = r.EntityMapper
+	runner.LoggerSettings = r.LoggerSettings
+	runner.ILogger = r.Logger()
+	if err := fn(runner); err != nil {
+		e := tx.Rollback()
+		if e != nil {
+			return err
+		}
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return err
+}
+
+func (r *Database) PrepareTx(sql string, fn func(run *PrepareTxRunner) error) error {
+	tx, err := r.DB.Begin()
+
+	if err != nil {
+		return err
+	}
+	stmt, err := tx.Prepare(sql)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	runner := NewPrepareTxRunner(sql, stmt)
 	runner.LoggerSettings = r.LoggerSettings
 	runner.ILogger = r.Logger()
 	if err := fn(runner); err != nil {
