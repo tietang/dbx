@@ -20,6 +20,7 @@ type FieldModel struct {
 	EmbeddedStruct  bool
 	IsUnique        bool
 	IsPk            bool
+	IsUpsertKey     bool
 }
 
 type EntityInfo struct {
@@ -257,6 +258,9 @@ func expandFields(e *EntityInfo, fis []*reflectx.FieldInfo) {
 				if strings.ToLower(v) == "uni" || strings.ToLower(v) == "unique" {
 					fd.IsUnique = true
 				}
+				if strings.ToLower(v) == "upsert" || strings.ToLower(v) == "upsertKey" {
+					fd.IsUpsertKey = true
+				}
 			}
 		}
 		if fi.Field.Type.Kind() == reflect.Struct {
@@ -265,7 +269,7 @@ func expandFields(e *EntityInfo, fis []*reflectx.FieldInfo) {
 		if fi.Field.Anonymous {
 			fd.Omitempty = true
 		}
-		//fmt.Printf("2: %d %+v %+v %+v\n", index, fi.Field.Name, fi.Name, fi)
+		//fmt.Printf("d: %d %+v %+v %+v\n", index, fi.Field.Name, fi.Name, fi)
 
 		fd.FieldIndex = fi.Index
 		fd.ParentFieldType = fi.Parent.Field

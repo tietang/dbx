@@ -3,11 +3,10 @@ module github.com/tietang/dbx
 go 1.12
 
 require (
-	github.com/go-sql-driver/mysql v1.4.1
-	github.com/google/uuid v1.3.0 // indirect
-	github.com/mailru/go-clickhouse/v2 v2.0.0
-	github.com/segmentio/ksuid v1.0.2
-	github.com/shopspring/decimal v0.0.0-20180709203117-cd690d0c9e24
-	github.com/smartystreets/goconvey v0.0.0-20190306220146-200a235640ff
-	google.golang.org/appengine v1.6.5 // indirect
+	github.com/go-sql-driver/mysql v1.7.0
+	github.com/gopherjs/gopherjs v1.17.2 // indirect
+	github.com/segmentio/ksuid v1.0.4
+	github.com/shopspring/decimal v1.3.1
+	github.com/smartystreets/assertions v1.13.0 // indirect
+	github.com/smartystreets/goconvey v1.7.2
 )

@@ -10,7 +10,7 @@ import (
 )
 
 type DubboSlowConsumer struct {
-	Service   string  `db:"service"`
+	Service   string  `db:"services"`
 	Method    string  `db:"method"`
 	ResTimeMs float64 `db:"responseTime_MS"`
 }
@@ -48,7 +48,7 @@ func main() {
 	fmt.Println(err)
 	second := time.Now().Second()
 	jsonStr := " {\"appName\":\"dzpl-aiproxy@local\",\"empty\":false,\"hostName\":\"172.22.5.204:8080\",\"interval\":1," +
-		"\"metricsList\":[{\"bizErrorCount\":0,\"cost\":9693783,\"count\":2,\"errorCount\":0,\"failure40xCount\":0,\"failure50xCount\":0,\"failureCount\":0,\"httpMethod\":\"POST\",\"requestByteSize\":142,\"responseByteSize\":0,\"seconds\":1668736686,\"uri\":\"/api/proxy/keyword/spotting\"}]," +
+		"\"metricsList\":[{\"bizErrorCount\":0,\"cost\":9693783,\"count\":d,\"errorCount\":0,\"failure40xCount\":0,\"failure50xCount\":0,\"failureCount\":0,\"httpMethod\":\"POST\",\"requestByteSize\":142,\"responseByteSize\":0,\"seconds\":1668736686,\"uri\":\"/api/proxy/keyword/spotting\"}]," +
 		"\"seconds\":" + strconv.Itoa(second) + "}"
 	mp := make(map[string]interface{})
 	err = json.Unmarshal([]byte(jsonStr), &mp)

@@ -5,6 +5,14 @@ import (
 	"database/sql"
 )
 
+const (
+	INSERT_ROLLBACK = "ROLLBACK"
+	INSERT_ABORT    = "ABORT"
+	INSERT_FAIL     = "FAIL"
+	INSERT_IGNORE   = "IGNORE"
+	INSERT_REPLACE  = "REPLACE"
+)
+
 type sqlExecutor interface {
 	Query(query string, args ...interface{}) (*sql.Rows, error)
 	QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
@@ -20,6 +28,22 @@ type mapperExecutor interface {
 	Execute(sql string, params ...interface{}) (lastInsertId, rowsAffected int64, err error)
 	Insert(model interface{}) (rs sql.Result, err error)
 	InsertContext(ctx context.Context, model interface{}) (rs sql.Result, err error)
+
+	InsertOrReplace(model interface{}) (rs sql.Result, err error)
+	InsertOrReplaceContext(ctx context.Context, model interface{}) (rs sql.Result, err error)
+
+	InsertOrIgnore(model interface{}) (rs sql.Result, err error)
+	InsertOrIgnoreContext(ctx context.Context, model interface{}) (rs sql.Result, err error)
+
+	InsertOrGet(model interface{}) (id int64, err error)
+	InsertOrGetContext(ctx context.Context, model interface{}) (id int64, err error)
+
+	InsertOr(model interface{}, onConflict string) (rs sql.Result, err error)
+	InsertOrContext(ctx context.Context, model interface{}, onConflict string) (rs sql.Result, err error)
+
+	Upsert(model interface{}, uniques ...string) (rs sql.Result, err error)
+	UpsertContext(ctx context.Context, model interface{}, uniques ...string) (rs sql.Result, err error)
+
 	Update(model interface{}) (rs sql.Result, err error)
 	UpdateContext(ctx context.Context, model interface{}) (rs sql.Result, err error)
 	Find(resultSlice interface{}, query string, params ...interface{}) (err error)
@@ -35,6 +59,8 @@ type mapperExecutor interface {
 
 	GetInt32(sql string, params ...interface{}) (rv int32, err error)
 	GetInt64(sql string, params ...interface{}) (rv int64, err error)
+	GetString(sql string, params ...interface{}) (rv string, err error)
+	GetValue(out interface{}, sql string, params ...interface{}) (err error)
 }
 
 type Scaner interface {
