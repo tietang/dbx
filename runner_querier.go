@@ -153,7 +153,7 @@ func (r *Runner) GetContext(ctx context.Context, out interface{}, sql string, pa
 	if r.LoggingEnabled() {
 		defer func(start time.Time) {
 			r.Logger().Log(&QueryStatus{
-				Message: &message,
+				//Message: &message,
 				Query:   sql,
 				Args:    params,
 				Err:     err,
@@ -178,7 +178,6 @@ func (r *Runner) GetContext(ctx context.Context, out interface{}, sql string, pa
 	if rows.Next() {
 		out, err = r.rowsMapping(out, rows)
 		if err != nil {
-
 			return false, err
 		}
 	} else {
@@ -246,7 +245,7 @@ func (r *Runner) GetOneContext(ctx context.Context, out interface{}) (ok bool, e
 	query := fmt.Sprintf("select %s from `%s` where %s", names[0:len(names)-1], entity.TableName, where)
 
 	if len(wheres) == 0 {
-		err := errors.New("no unique column for db tag. example: `db:\"order_id,unique\"` : " + ind.Kind().String())
+		err := errors.New("no.txt unique column for db tag. jiebaexample: `db:\"order_id,unique\"` : " + ind.Kind().String())
 		if r.LoggingEnabled() {
 			defer func(start time.Time) {
 				r.Logger().Log(&QueryStatus{
@@ -331,8 +330,19 @@ func (r *Runner) GetInt32(sql string, params ...interface{}) (rv int32, err erro
 	err = row.Scan(&rv)
 	return
 }
+
 func (r *Runner) GetInt64(sql string, params ...interface{}) (rv int64, err error) {
 	row := r.sqlExecutor.QueryRow(sql, params...)
 	err = row.Scan(&rv)
+	return
+}
+func (r *Runner) GetString(sql string, params ...interface{}) (rv string, err error) {
+	row := r.sqlExecutor.QueryRow(sql, params...)
+	err = row.Scan(&rv)
+	return
+}
+func (r *Runner) GetValue(out interface{}, sql string, params ...interface{}) (err error) {
+	row := r.sqlExecutor.QueryRow(sql, params...)
+	err = row.Scan(out)
 	return
 }

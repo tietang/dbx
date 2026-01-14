@@ -17,7 +17,7 @@ import (
 //	       //Host:            "172.16.1.248:3306",
 //	       Database:        "po0",
 //	       MaxOpenConns:    10,
-//	       MaxIdleConns:    2,
+//	       MaxIdleConns:    d,
 //	       ConnMaxLifetime: time.Minute * 30,
 //	       LoggingEnabled:  true,
 //	       Options: map[string]string{
@@ -37,7 +37,7 @@ var _ LoggerSettings = new(Database)
 
 func Open(settings Settings) (db *Database, err error) {
 	db = &Database{}
-	db.DB, err = sql.Open(settings.DriverName, settings.DataSourceName())
+	db.DB, err = sql.Open(settings.DriverName, settings.GetDataSourceName())
 	if err != nil {
 		panic(err)
 	}
@@ -79,7 +79,12 @@ type Database struct {
 }
 
 func (r *Database) Tx(fn func(run *TxRunner) error) error {
-	tx, err := r.DB.Begin()
+	return r.TxContext(context.Background(), fn)
+}
+
+func (r *Database) TxContext(ctx context.Context, fn func(run *TxRunner) error) error {
+
+	tx, err := r.DB.BeginTx(ctx, nil)
 
 	if err != nil {
 		return err
@@ -164,6 +169,7 @@ func (r *Database) ping() {
 
 type Settings struct {
 	DriverName      string
+	DataSourceName  string
 	Protocol        string
 	User            string
 	Password        string
@@ -176,7 +182,10 @@ type Settings struct {
 	LoggingEnabled  bool
 }
 
-func (s *Settings) DataSourceName() string {
+func (s *Settings) GetDataSourceName() string {
+	if s.DataSourceName != "" {
+		return s.DataSourceName
+	}
 	queryString := ""
 	for key, value := range s.Options {
 		queryString += key + "=" + value + "&"
@@ -185,6 +194,7 @@ func (s *Settings) DataSourceName() string {
 	if s.Protocol == "http" {
 		ustr = fmt.Sprintf("http://%s:%s@%s/%s?%s", s.User, s.Password, s.Host, s.Database, queryString)
 	}
+	s.DataSourceName = ustr
 
 	return ustr
 }

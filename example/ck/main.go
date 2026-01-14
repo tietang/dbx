@@ -8,7 +8,7 @@ import (
 )
 
 type DubboSlowConsumer struct {
-	Service   string  `db:"service"`
+	Service   string  `db:"services"`
 	Method    string  `db:"method"`
 	ResTimeMs float64 `db:"responseTime_MS"`
 }
@@ -44,10 +44,10 @@ func main() {
 	}
 	err = db.Ping()
 	fmt.Println(err)
-	sql := "SELECT   service,   method,   sum(elapsed) / 1000000 as responseTime_MS " +
+	sql := "SELECT   services,   method,   sum(elapsed) / 1000000 as responseTime_MS " +
 		" FROM m_dubbo " +
 		" WHERE dt >= toDateTime(?) AND dt <= toDateTime(?) and side = 'consumer' " +
-		" GROUP BY   service,   method " +
+		" GROUP BY   services,   method " +
 		" HAVING responseTime_MS > 1000"
 
 	var consumers []*DubboSlowConsumer
