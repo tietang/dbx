@@ -325,6 +325,23 @@ func (r *Runner) QueryRowContext(ctx context.Context, sql string, params ...inte
 	//return row
 }
 
+func (r *Runner) GetInt(sql string, params ...interface{}) (rv int, err error) {
+	if r.LoggingEnabled() {
+		defer func(start time.Time) {
+			r.Logger().Log(&QueryStatus{
+				Query: sql,
+				Args:  params,
+				Err:   err,
+				Start: start,
+				End:   time.Now(),
+			})
+		}(time.Now())
+	}
+	row := r.sqlExecutor.QueryRow(sql, params...)
+	err = row.Scan(&rv)
+	return
+}
+
 func (r *Runner) GetInt32(sql string, params ...interface{}) (rv int32, err error) {
 	if r.LoggingEnabled() {
 		defer func(start time.Time) {
@@ -358,6 +375,7 @@ func (r *Runner) GetInt64(sql string, params ...interface{}) (rv int64, err erro
 	err = row.Scan(&rv)
 	return
 }
+
 func (r *Runner) GetString(sql string, params ...interface{}) (rv string, err error) {
 	if r.LoggingEnabled() {
 		defer func(start time.Time) {
@@ -374,6 +392,7 @@ func (r *Runner) GetString(sql string, params ...interface{}) (rv string, err er
 	err = row.Scan(&rv)
 	return
 }
+
 func (r *Runner) GetValue(out interface{}, sql string, params ...interface{}) (err error) {
 	if r.LoggingEnabled() {
 		defer func(start time.Time) {
