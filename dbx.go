@@ -4,9 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/tietang/dbx/mapping"
 	"log"
 	"time"
+
+	"github.com/tietang/dbx/mapping"
 )
 
 //	settings := dbx.Settings{
@@ -168,20 +169,24 @@ func (r *Database) ping() {
 }
 
 type Settings struct {
-	DriverName      string
-	DataSourceName  string
-	Protocol        string
-	User            string
-	Password        string
-	Database        string
-	Host            string
-	Options         map[string]string
-	ConnMaxLifetime time.Duration
-	MaxOpenConns    int
-	MaxIdleConns    int
-	LoggingEnabled  bool
+	DriverName        string
+	DataSourceName    string
+	Protocol          string
+	User              string
+	Password          string
+	Database          string
+	Host              string
+	Options           map[string]string
+	ConnMaxLifetime   time.Duration
+	MaxOpenConns      int
+	MaxIdleConns      int
+	LoggingEnabled    bool
+	driverUrlCallback func(settings *Settings) string
 }
 
+func (s *Settings) SetDriverUrlCallback(callback func(settings *Settings) string) {
+	s.driverUrlCallback = callback
+}
 func (s *Settings) GetDataSourceName() string {
 	if s.DataSourceName != "" {
 		return s.DataSourceName
@@ -193,6 +198,9 @@ func (s *Settings) GetDataSourceName() string {
 	ustr := fmt.Sprintf("%s:%s@tcp(%s)/%s?%s", s.User, s.Password, s.Host, s.Database, queryString)
 	if s.Protocol == "http" {
 		ustr = fmt.Sprintf("http://%s:%s@%s/%s?%s", s.User, s.Password, s.Host, s.Database, queryString)
+	}
+	if s.driverUrlCallback != nil {
+		ustr = s.driverUrlCallback(s)
 	}
 	s.DataSourceName = ustr
 
