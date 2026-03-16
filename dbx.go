@@ -168,25 +168,31 @@ func (r *Database) ping() {
 	})
 }
 
-type Settings struct {
-	DriverName        string
-	DataSourceName    string
-	Protocol          string
-	User              string
-	Password          string
-	Database          string
-	Host              string
-	Options           map[string]string
-	ConnMaxLifetime   time.Duration
-	MaxOpenConns      int
-	MaxIdleConns      int
-	LoggingEnabled    bool
-	driverUrlCallback func(settings *Settings) string
+type DriverUrlGenerator interface {
+	GetDataSourceName(s *Settings) string
+	ShortDataSourceName(s *Settings) string
 }
 
-func (s *Settings) SetDriverUrlCallback(callback func(settings *Settings) string) {
-	s.driverUrlCallback = callback
+type Settings struct {
+	DriverName         string
+	DataSourceName     string
+	Protocol           string
+	User               string
+	Password           string
+	Database           string
+	Host               string
+	Options            map[string]string
+	ConnMaxLifetime    time.Duration
+	MaxOpenConns       int
+	MaxIdleConns       int
+	LoggingEnabled     bool
+	driverUrlGenerator DriverUrlGenerator
 }
+
+func (s *Settings) SetDriverUrlGenerator(g DriverUrlGenerator) {
+	s.driverUrlGenerator = g
+}
+
 func (s *Settings) GetDataSourceName() string {
 	if s.DataSourceName != "" {
 		return s.DataSourceName
@@ -199,8 +205,8 @@ func (s *Settings) GetDataSourceName() string {
 	if s.Protocol == "http" {
 		ustr = fmt.Sprintf("http://%s:%s@%s/%s?%s", s.User, s.Password, s.Host, s.Database, queryString)
 	}
-	if s.driverUrlCallback != nil {
-		ustr = s.driverUrlCallback(s)
+	if s.driverUrlGenerator != nil {
+		ustr = s.driverUrlGenerator.GetDataSourceName(s)
 	}
 	s.DataSourceName = ustr
 
@@ -214,6 +220,9 @@ func (s *Settings) ShortDataSourceName() string {
 	ustr := fmt.Sprintf("%s:***@tcp(%s)/%s?%s", s.User, s.Host, s.Database, queryString)
 	if s.Protocol == "http" {
 		ustr = fmt.Sprintf("http://%s:***@%s/%s?%s", s.User, s.Host, s.Database, queryString)
+	}
+	if s.driverUrlGenerator != nil {
+		ustr = s.driverUrlGenerator.ShortDataSourceName(s)
 	}
 	return ustr
 }
