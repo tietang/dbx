@@ -117,6 +117,7 @@ func (r *Runner) SelectContext(ctx context.Context, mapper RowsMapper, resultSli
 	if err != nil {
 		return err
 	}
+	defer rows.Close()
 
 	slicev := dstv.Elem()
 	itemT := slicev.Type().Elem()

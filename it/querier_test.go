@@ -4,12 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"reflect"
+	"testing"
+
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/segmentio/ksuid"
 	"github.com/shopspring/decimal"
-	. "github.com/smartystreets/goconvey/convey"
-	"reflect"
-	"testing"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSlice(t *testing.T) {
@@ -31,232 +33,198 @@ func TestSlice(t *testing.T) {
 }
 
 func TestFindPtr(t *testing.T) {
+	g0 := newEnvelopeGoods(1)
+	rs, err := db.InsertContext(context.Background(), &g0)
+	require.NoError(t, err)
+	require.NotNil(t, rs)
+	id, err := rs.LastInsertId()
+	require.NoError(t, err)
+	assert.True(t, id > 0)
+	rows, err := rs.RowsAffected()
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), rows)
 
-	Convey("查询测试", t, func() {
-		Convey("正常", func() {
-			g0 := newEnvelopeGoods(1)
-			rs, err := db.InsertContext(context.Background(), &g0)
-			So(err, ShouldBeNil)
-			So(rs, ShouldNotBeNil)
-			id, err := rs.LastInsertId()
-			So(err, ShouldBeNil)
-			So(id > 0, ShouldBeTrue)
-			rows, err := rs.RowsAffected()
-			So(err, ShouldBeNil)
-			So(rows, ShouldEqual, 1)
+	var redEnvelopeGoodss []EnvelopeGoods
+	query := "select * from red_envelope_goods limit ?,?"
+	err = db.Find(&redEnvelopeGoodss, query, 0, 100)
 
-			var redEnvelopeGoodss []EnvelopeGoods
-			query := "select * from red_envelope_goods limit ?,?"
-			err = db.Find(&redEnvelopeGoodss, query, 0, 100)
-
-			So(err, ShouldBeNil)
-			So(len(redEnvelopeGoodss) > 0, ShouldBeTrue)
-			fmt.Println(redEnvelopeGoodss)
-		})
-	})
+	require.NoError(t, err)
+	assert.True(t, len(redEnvelopeGoodss) > 0)
+	fmt.Println(redEnvelopeGoodss)
 }
 
 func TestFindPtrSlice(t *testing.T) {
+	g0 := newEnvelopeGoods(1)
+	rs, err := db.InsertContext(context.Background(), &g0)
+	require.NoError(t, err)
+	require.NotNil(t, rs)
+	id, err := rs.LastInsertId()
+	require.NoError(t, err)
+	assert.True(t, id > 0)
+	rows, err := rs.RowsAffected()
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), rows)
 
-	Convey("查询测试", t, func() {
-		Convey("正常", func() {
-			g0 := newEnvelopeGoods(1)
-			rs, err := db.InsertContext(context.Background(), &g0)
-			So(err, ShouldBeNil)
-			So(rs, ShouldNotBeNil)
-			id, err := rs.LastInsertId()
-			So(err, ShouldBeNil)
-			So(id > 0, ShouldBeTrue)
-			rows, err := rs.RowsAffected()
-			So(err, ShouldBeNil)
-			So(rows, ShouldEqual, 1)
+	var redEnvelopeGoodss []*EnvelopeGoods
+	query := "select * from red_envelope_goods limit ?,?"
+	err = db.Find(&redEnvelopeGoodss, query, 0, 100)
 
-			var redEnvelopeGoodss []*EnvelopeGoods
-			query := "select * from red_envelope_goods limit ?,?"
-			err = db.Find(&redEnvelopeGoodss, query, 0, 100)
-
-			So(err, ShouldBeNil)
-			So(len(redEnvelopeGoodss) > 0, ShouldBeTrue)
-			fmt.Println(redEnvelopeGoodss)
-		})
-	})
+	require.NoError(t, err)
+	assert.True(t, len(redEnvelopeGoodss) > 0)
+	fmt.Println(redEnvelopeGoodss)
 }
 
 func TestFind(t *testing.T) {
+	g0 := newEnvelopeGoods(1)
+	rs, err := db.InsertContext(context.Background(), &g0)
+	require.NoError(t, err)
+	require.NotNil(t, rs)
+	id, err := rs.LastInsertId()
+	require.NoError(t, err)
+	assert.True(t, id > 0)
+	rows, err := rs.RowsAffected()
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), rows)
 
-	Convey("查询测试", t, func() {
-		Convey("正常", func() {
-			g0 := newEnvelopeGoods(1)
-			rs, err := db.InsertContext(context.Background(), &g0)
-			So(err, ShouldBeNil)
-			So(rs, ShouldNotBeNil)
-			id, err := rs.LastInsertId()
-			So(err, ShouldBeNil)
-			So(id > 0, ShouldBeTrue)
-			rows, err := rs.RowsAffected()
-			So(err, ShouldBeNil)
-			So(rows, ShouldEqual, 1)
+	var redEnvelopeGoodss []EnvelopeGoods
+	query := "select * from red_envelope_goods limit ?,?"
+	err = db.Find(redEnvelopeGoodss, query, 0, 100)
 
-			var redEnvelopeGoodss []EnvelopeGoods
-			query := "select * from red_envelope_goods limit ?,?"
-			err = db.Find(redEnvelopeGoodss, query, 0, 100)
-
-			So(err, ShouldNotBeNil)
-		})
-	})
+	assert.Error(t, err)
 }
-func TestGetAccount(t *testing.T) {
 
-	Convey("查询测试", t, func() {
-		Convey("正常", func() {
-			a := &Account{
-				Balance: decimal.NewFromFloat(100), Status: 1,
-				UserId:    ksuid.New().Next().String(),
-				Username:  sql.NullString{String: "测试用户1", Valid: true},
-				AccountNo: ksuid.New().Next().String(),
-			}
-			rs, err := db.Insert(a)
-			So(err, ShouldBeNil)
-			fmt.Printf("AccountNo=%s\n", a.AccountNo)
-			So(rs, ShouldNotBeNil)
-			q := &Account{AccountNo: a.AccountNo}
-			ok, err := db.GetOne(q)
-			So(err, ShouldBeNil)
-			So(ok, ShouldBeTrue)
-			So(q.AccountNo, ShouldEqual, a.AccountNo)
-			So(q.Balance.String(), ShouldEqual, a.Balance.String())
-			So(q.UserId, ShouldEqual, a.UserId)
-			So(q.CreatedAt, ShouldNotBeNil)
-			So(q.UpdatedAt, ShouldNotBeNil)
-		})
-	})
+func TestGetAccount(t *testing.T) {
+	a := &Account{
+		Balance: decimal.NewFromFloat(100), Status: 1,
+		UserId:    ksuid.New().Next().String(),
+		Username:  sql.NullString{String: "测试用户1", Valid: true},
+		AccountNo: ksuid.New().Next().String(),
+	}
+	rs, err := db.Insert(a)
+	require.NoError(t, err)
+	fmt.Printf("AccountNo=%s\n", a.AccountNo)
+	require.NotNil(t, rs)
+	q := &Account{AccountNo: a.AccountNo}
+	ok, err := db.GetOne(q)
+	require.NoError(t, err)
+	assert.True(t, ok)
+	assert.Equal(t, a.AccountNo, q.AccountNo)
+	assert.Equal(t, a.Balance.String(), q.Balance.String())
+	assert.Equal(t, a.UserId, q.UserId)
+	assert.NotNil(t, q.CreatedAt)
+	assert.NotNil(t, q.UpdatedAt)
 }
 
 func TestGetAccountById(t *testing.T) {
 	fmt.Println(Create)
-	Convey("查询测试", t, func() {
-		Convey("正常", func() {
-			a := &Account{
-				Balance: decimal.NewFromFloat(100), Status: 1,
-				UserId:    ksuid.New().Next().String(),
-				Username:  sql.NullString{String: "测试用户1", Valid: true},
-				AccountNo: ksuid.New().Next().String(),
-			}
-			rs, err := db.Insert(a)
-			So(err, ShouldBeNil)
-			fmt.Printf("AccountNo=%s\n", a.AccountNo)
-			So(rs, ShouldNotBeNil)
-			id, err := rs.LastInsertId()
-			So(id, ShouldBeGreaterThanOrEqualTo, 0)
-			So(err, ShouldBeNil)
-			q := &Account{Id: id}
-			ok, err := db.GetOne(q)
-			So(err, ShouldBeNil)
-			So(ok, ShouldBeTrue)
-			So(q.Id, ShouldEqual, id)
-			So(q.AccountNo, ShouldEqual, a.AccountNo)
-			So(q.Balance.String(), ShouldEqual, a.Balance.String())
-			So(q.UserId, ShouldEqual, a.UserId)
-			So(q.CreatedAt, ShouldNotBeNil)
-			So(q.UpdatedAt, ShouldNotBeNil)
-		})
-	})
+	a := &Account{
+		Balance: decimal.NewFromFloat(100), Status: 1,
+		UserId:    ksuid.New().Next().String(),
+		Username:  sql.NullString{String: "测试用户1", Valid: true},
+		AccountNo: ksuid.New().Next().String(),
+	}
+	rs, err := db.Insert(a)
+	require.NoError(t, err)
+	fmt.Printf("AccountNo=%s\n", a.AccountNo)
+	require.NotNil(t, rs)
+	id, err := rs.LastInsertId()
+	require.NoError(t, err)
+	assert.GreaterOrEqual(t, id, int64(0))
+	q := &Account{Id: id}
+	ok, err := db.GetOne(q)
+	require.NoError(t, err)
+	assert.True(t, ok)
+	assert.Equal(t, id, q.Id)
+	assert.Equal(t, a.AccountNo, q.AccountNo)
+	assert.Equal(t, a.Balance.String(), q.Balance.String())
+	assert.Equal(t, a.UserId, q.UserId)
+	assert.NotNil(t, q.CreatedAt)
+	assert.NotNil(t, q.UpdatedAt)
 }
 
 func TestInsert(t *testing.T) {
-	Convey("写入测试", t, func() {
-		Convey("正常", func() {
-			g0 := newEnvelopeGoods(1)
-			rs, err := db.InsertContext(context.Background(), &g0)
-			So(err, ShouldBeNil)
-			So(rs, ShouldNotBeNil)
-			id, err := rs.LastInsertId()
-			So(err, ShouldBeNil)
-			So(id > 0, ShouldBeTrue)
-			rows, err := rs.RowsAffected()
-			So(err, ShouldBeNil)
-			So(rows, ShouldEqual, 1)
-			g1 := &EnvelopeGoods{EnvelopeNo: g0.EnvelopeNo}
+	g0 := newEnvelopeGoods(1)
+	rs, err := db.InsertContext(context.Background(), &g0)
+	require.NoError(t, err)
+	require.NotNil(t, rs)
+	id, err := rs.LastInsertId()
+	require.NoError(t, err)
+	assert.True(t, id > 0)
+	rows, err := rs.RowsAffected()
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), rows)
+	g1 := &EnvelopeGoods{EnvelopeNo: g0.EnvelopeNo}
 
-			ok, err := db.GetOne(g1)
-			fmt.Println()
-			fmt.Printf("%+v\n", g0)
-			fmt.Printf("%+v\n", g1)
-			So(err, ShouldBeNil)
-			So(ok, ShouldBeTrue)
-			So(*g1.EnvelopeNo, ShouldEqual, *g0.EnvelopeNo)
-			So(g1.EnvelopeType, ShouldEqual, g0.EnvelopeType)
-			So(g1.Username, ShouldEqual, g0.Username)
-			So(g1.UserId, ShouldEqual, g0.UserId)
-			So(g1.Blessing.String, ShouldEqual, g0.Blessing.String)
-			So(g1.Amount.String(), ShouldEqual, g0.Amount.String())
-			So(g1.AmountOne.String(), ShouldEqual, g0.AmountOne.String())
-			So(g1.Quantity, ShouldEqual, g0.Quantity)
-			So(g1.RemainAmount.String(), ShouldEqual, g0.RemainAmount.String())
-			So(g1.RemainQuantity, ShouldEqual, g0.RemainQuantity)
-			So(g1.ExpiredAt.Second(), ShouldEqual, g0.ExpiredAt.Second())
-			So(g1.Status, ShouldEqual, g0.Status)
-			So(g1.OrderType, ShouldEqual, g0.OrderType)
-			So(g1.PayStatus, ShouldEqual, g0.PayStatus)
-
-		})
-	})
+	ok, err := db.GetOne(g1)
+	fmt.Println()
+	fmt.Printf("%+v\n", g0)
+	fmt.Printf("%+v\n", g1)
+	require.NoError(t, err)
+	assert.True(t, ok)
+	assert.Equal(t, *g0.EnvelopeNo, *g1.EnvelopeNo)
+	assert.Equal(t, g0.EnvelopeType, g1.EnvelopeType)
+	assert.Equal(t, g0.Username, g1.Username)
+	assert.Equal(t, g0.UserId, g1.UserId)
+	assert.Equal(t, g0.Blessing.String, g1.Blessing.String)
+	assert.Equal(t, g0.Amount.String(), g1.Amount.String())
+	assert.Equal(t, g0.AmountOne.String(), g1.AmountOne.String())
+	assert.Equal(t, g0.Quantity, g1.Quantity)
+	assert.Equal(t, g0.RemainAmount.String(), g1.RemainAmount.String())
+	assert.Equal(t, g0.RemainQuantity, g1.RemainQuantity)
+	assert.Equal(t, g0.ExpiredAt.Second(), g1.ExpiredAt.Second())
+	assert.Equal(t, g0.Status, g1.Status)
+	assert.Equal(t, g0.OrderType, g1.OrderType)
+	assert.Equal(t, g0.PayStatus, g1.PayStatus)
 }
 
 func TestUpdate(t *testing.T) {
-	Convey("更新测试", t, func() {
-		Convey("正常", func() {
-			g0 := newEnvelopeGoods(1)
-			rs, err := db.InsertContext(context.Background(), &g0)
-			So(err, ShouldBeNil)
-			So(rs, ShouldNotBeNil)
-			id, err := rs.LastInsertId()
-			So(err, ShouldBeNil)
-			So(id > 0, ShouldBeTrue)
-			rows, err := rs.RowsAffected()
-			So(err, ShouldBeNil)
-			So(rows, ShouldEqual, 1)
-			g1 := newEnvelopeGoods(2)
-			g1.EnvelopeNo = g0.EnvelopeNo
-			//
-			rs, err = db.Update(&g1)
-			fmt.Println()
-			fmt.Printf("%+v\n", g0)
-			fmt.Printf("%+v\n", g1)
-			So(err, ShouldBeNil)
-			So(err, ShouldBeNil)
-			So(rs, ShouldNotBeNil)
-			id, err = rs.LastInsertId()
-			So(err, ShouldBeNil)
-			So(id == 0, ShouldBeTrue)
-			rows, err = rs.RowsAffected()
-			So(err, ShouldBeNil)
-			So(rows, ShouldEqual, 1)
-			//
-			g2 := &EnvelopeGoods{EnvelopeNo: g0.EnvelopeNo}
-			ok, err := db.GetOne(g2)
-			fmt.Println()
-			fmt.Printf("%+v\n", g2)
-			fmt.Printf("%+v\n", g1)
-			So(err, ShouldBeNil)
-			So(ok, ShouldBeTrue)
-			So(*g2.EnvelopeNo, ShouldEqual, *g1.EnvelopeNo)
-			So(g2.EnvelopeType, ShouldEqual, g1.EnvelopeType)
-			So(g2.Username, ShouldEqual, g1.Username)
-			So(g2.UserId, ShouldEqual, g1.UserId)
-			So(g2.Blessing.String, ShouldEqual, g1.Blessing.String)
-			So(g2.Amount.String(), ShouldEqual, g1.Amount.String())
-			So(g2.AmountOne.String(), ShouldEqual, g1.AmountOne.String())
-			So(g2.Quantity, ShouldEqual, g1.Quantity)
-			So(g2.RemainAmount.String(), ShouldEqual, g1.RemainAmount.String())
-			So(g2.RemainQuantity, ShouldEqual, g1.RemainQuantity)
-			So(g2.ExpiredAt.Second(), ShouldEqual, g1.ExpiredAt.Second())
-			So(g2.Status, ShouldEqual, g1.Status)
-			So(g2.OrderType, ShouldEqual, g1.OrderType)
-			So(g2.PayStatus, ShouldEqual, g1.PayStatus)
-
-		})
-	})
+	g0 := newEnvelopeGoods(1)
+	rs, err := db.InsertContext(context.Background(), &g0)
+	require.NoError(t, err)
+	require.NotNil(t, rs)
+	id, err := rs.LastInsertId()
+	require.NoError(t, err)
+	assert.True(t, id > 0)
+	rows, err := rs.RowsAffected()
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), rows)
+	g1 := newEnvelopeGoods(2)
+	g1.EnvelopeNo = g0.EnvelopeNo
+	//
+	rs, err = db.Update(&g1)
+	fmt.Println()
+	fmt.Printf("%+v\n", g0)
+	fmt.Printf("%+v\n", g1)
+	require.NoError(t, err)
+	require.NotNil(t, rs)
+	id, err = rs.LastInsertId()
+	require.NoError(t, err)
+	assert.Equal(t, int64(0), id)
+	rows, err = rs.RowsAffected()
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), rows)
+	//
+	g2 := &EnvelopeGoods{EnvelopeNo: g0.EnvelopeNo}
+	ok, err := db.GetOne(g2)
+	fmt.Println()
+	fmt.Printf("%+v\n", g2)
+	fmt.Printf("%+v\n", g1)
+	require.NoError(t, err)
+	assert.True(t, ok)
+	assert.Equal(t, *g1.EnvelopeNo, *g2.EnvelopeNo)
+	assert.Equal(t, g1.EnvelopeType, g2.EnvelopeType)
+	assert.Equal(t, g1.Username, g2.Username)
+	assert.Equal(t, g1.UserId, g2.UserId)
+	assert.Equal(t, g1.Blessing.String, g2.Blessing.String)
+	assert.Equal(t, g1.Amount.String(), g2.Amount.String())
+	assert.Equal(t, g1.AmountOne.String(), g2.AmountOne.String())
+	assert.Equal(t, g1.Quantity, g2.Quantity)
+	assert.Equal(t, g1.RemainAmount.String(), g2.RemainAmount.String())
+	assert.Equal(t, g1.RemainQuantity, g2.RemainQuantity)
+	assert.Equal(t, g1.ExpiredAt.Second(), g2.ExpiredAt.Second())
+	assert.Equal(t, g1.Status, g2.Status)
+	assert.Equal(t, g1.OrderType, g2.OrderType)
+	assert.Equal(t, g1.PayStatus, g2.PayStatus)
 }
 
 var Drop = "DROP TABLE IF EXISTS `red_envelope_goods`;"

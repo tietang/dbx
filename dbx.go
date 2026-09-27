@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/tietang/dbx/mapping"
@@ -118,8 +117,12 @@ func (r *Database) PrepareTx(sql string, fn func(run *PrepareTxRunner) error) er
 	stmt, err := tx.Prepare(sql)
 
 	if err != nil {
-		log.Fatal(err)
+		if e := tx.Rollback(); e != nil {
+			return fmt.Errorf("prepare failed: %v; rollback: %v", err, e)
+		}
+		return err
 	}
+	defer stmt.Close()
 
 	runner := NewPrepareTxRunner(sql, stmt)
 	runner.LoggerSettings = r.LoggerSettings
