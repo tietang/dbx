@@ -258,7 +258,7 @@ func expandFields(e *EntityInfo, fis []*reflectx.FieldInfo) {
 				if strings.ToLower(v) == "uni" || strings.ToLower(v) == "unique" {
 					fd.IsUnique = true
 				}
-				if strings.ToLower(v) == "upsert" || strings.ToLower(v) == "upsertKey" {
+				if strings.ToLower(v) == "upsert" || strings.ToLower(v) == "upsertkey" {
 					fd.IsUpsertKey = true
 				}
 			}

@@ -4,9 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/tietang/dbx/mapping"
-	"log"
 	"time"
+
+	"github.com/tietang/dbx/mapping"
 )
 
 //	settings := dbx.Settings{
@@ -117,8 +117,12 @@ func (r *Database) PrepareTx(sql string, fn func(run *PrepareTxRunner) error) er
 	stmt, err := tx.Prepare(sql)
 
 	if err != nil {
-		log.Fatal(err)
+		if e := tx.Rollback(); e != nil {
+			return fmt.Errorf("prepare failed: %v; rollback: %v", err, e)
+		}
+		return err
 	}
+	defer stmt.Close()
 
 	runner := NewPrepareTxRunner(sql, stmt)
 	runner.LoggerSettings = r.LoggerSettings
@@ -167,19 +171,29 @@ func (r *Database) ping() {
 	})
 }
 
+type DriverUrlGenerator interface {
+	GetDataSourceName(s *Settings) string
+	ShortDataSourceName(s *Settings) string
+}
+
 type Settings struct {
-	DriverName      string
-	DataSourceName  string
-	Protocol        string
-	User            string
-	Password        string
-	Database        string
-	Host            string
-	Options         map[string]string
-	ConnMaxLifetime time.Duration
-	MaxOpenConns    int
-	MaxIdleConns    int
-	LoggingEnabled  bool
+	DriverName         string
+	DataSourceName     string
+	Protocol           string
+	User               string
+	Password           string
+	Database           string
+	Host               string
+	Options            map[string]string
+	ConnMaxLifetime    time.Duration
+	MaxOpenConns       int
+	MaxIdleConns       int
+	LoggingEnabled     bool
+	driverUrlGenerator DriverUrlGenerator
+}
+
+func (s *Settings) SetDriverUrlGenerator(g DriverUrlGenerator) {
+	s.driverUrlGenerator = g
 }
 
 func (s *Settings) GetDataSourceName() string {
@@ -194,6 +208,9 @@ func (s *Settings) GetDataSourceName() string {
 	if s.Protocol == "http" {
 		ustr = fmt.Sprintf("http://%s:%s@%s/%s?%s", s.User, s.Password, s.Host, s.Database, queryString)
 	}
+	if s.driverUrlGenerator != nil {
+		ustr = s.driverUrlGenerator.GetDataSourceName(s)
+	}
 	s.DataSourceName = ustr
 
 	return ustr
@@ -206,6 +223,9 @@ func (s *Settings) ShortDataSourceName() string {
 	ustr := fmt.Sprintf("%s:***@tcp(%s)/%s?%s", s.User, s.Host, s.Database, queryString)
 	if s.Protocol == "http" {
 		ustr = fmt.Sprintf("http://%s:***@%s/%s?%s", s.User, s.Host, s.Database, queryString)
+	}
+	if s.driverUrlGenerator != nil {
+		ustr = s.driverUrlGenerator.ShortDataSourceName(s)
 	}
 	return ustr
 }

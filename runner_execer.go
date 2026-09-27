@@ -84,6 +84,10 @@ func (r *Runner) InsertContext(ctx context.Context, model interface{}) (rs sql.R
 		names += "`" + fd.ColumnName + "`,"
 		placeholders += "?,"
 	}
+	if len(names) == 0 {
+		return nil, errors.New("no insertable columns for " + entity.TableName)
+	}
+
 	sql := fmt.Sprintf("insert into `%s`(%s) values(%s)", entity.TableName, names[0:len(names)-1], placeholders[0:len(placeholders)-1])
 
 	return r.ExecContext(ctx, sql, params...)
@@ -254,12 +258,15 @@ func (r *Runner) UpsertContext(ctx context.Context, model interface{}, uniques .
 			upsertKeys += "," + fd.ColumnName
 		}
 	}
-	if len(uniques) == 0 && upsertKeys == "" {
+	if len(uniques) > 0 {
+		upsertKeys = ""
+		for _, u := range uniques {
+			upsertKeys += "," + u
+		}
+	}
+	if len(upsertKeys) == 0 || len(names) == 0 {
 		return nil, errors.New("未指定upsert Unique Keys！")
 	}
-	//sql := fmt.Sprintf("insert into `%s`(%s) values(%s)", entity.TableName, names[0:len(names)-1], placeholders[0:len(placeholders)-1])
-	//where := strings.Join(wheres, " and ")
-	//sql = fmt.Sprintf("update `%s` set %s where %s", entity.TableName, names[0:len(names)-1], where)
 	sql := fmt.Sprintf(
 		"insert into `%s`(%s) values(%s)  ON CONFLICT(%s)  DO UPDATE SET  %s ",
 		entity.TableName, names[1:], placeholders[1:],

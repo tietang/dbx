@@ -2,3 +2,5 @@
 .idea/
 /logs/
 .DS_Store
+go.sum
+logs/
